@@ -58,6 +58,8 @@ The LDAP Account Password for the provided `Bind Distinguished Name`. This setti
 
 The maximum number of pooled LDAP connections that will be maintained by the integration. If all pooled connections are in use new lookup requests will be queued (if too many requests are queued the integration will drop the request and report an error).  This option defaults to 10 but should be increased for larger deployments.  In general, you should have at least 1 connection per active integration user. 
 
+> If you encounter the error "max waitingClients count exceeded" you will need to increase the maximum connection pool size.  
+
 
 ### Search Distinguished Name
 
