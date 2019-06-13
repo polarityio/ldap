@@ -26,7 +26,8 @@ module.exports = {
    * @type String
    * @optional
    */
-  description: 'Search your Lightweight Directory Access Protocol (LDAP) server by email address',
+  description:
+    'Search your Lightweight Directory Access Protocol (LDAP) server by email address',
   entityTypes: ['email'],
   /**
    * An array of style files (css or less) that will be included for your integration. Any styles specified in
@@ -93,7 +94,7 @@ module.exports = {
   options: [
     {
       key: 'url',
-      name: 'LDAP Server URL',
+      name: 'LDAP Server URL (Changes Require Integration Restart)',
       description:
         "URL for your LDAP server. (e.g., 'ldap://dc.domain.com' or 'ldaps://dc.domain.com')",
       default: '',
@@ -103,7 +104,7 @@ module.exports = {
     },
     {
       key: 'bindDN',
-      name: 'Bind Distinguished Name',
+      name: 'Bind Distinguished Name (Changes Require Integration Restart)',
       description:
         "LDAP Bind DN (e.g., 'uid=tony.stark,ou=Users,o=5be4c382c583e54de6a3ff52,dc=jumpcloud,dc=com')",
       default: '',
@@ -114,9 +115,20 @@ module.exports = {
     {
       key: 'password',
       name: 'Password',
-      description: 'Bind DN Password',
+      description: 'Bind DN Password (Changes Require Integration Restart)',
       default: '',
       type: 'password',
+      userCanEdit: false,
+      adminOnly: true
+    },
+    {
+      key: 'maxClients',
+      name:
+        'Maximum Connection Pool Size (Changes Require Integration Restart)',
+      description:
+        'The maximum number of pooled LDAP connections that will be maintained by the integration. If all pooled connections are in use new lookup requests will be queued (if too many requests are queued the integration will drop the request and report an error). IMPORTANT: After changing this option you must restart the integration for the changes to take place.',
+      default: 10,
+      type: 'number',
       userCanEdit: false,
       adminOnly: true
     },
@@ -169,16 +181,6 @@ module.exports = {
         'A custom user search email attribute (case sensitive) that will be used to compare against the email address being looked up.  This option will not be used if left blank and instead the `User Email Search Attribute` will be used.',
       default: '',
       type: 'text',
-      userCanEdit: false,
-      adminOnly: true
-    },
-    {
-      key: 'maxClients',
-      name: 'Maximum Connection Pool Size',
-      description:
-        'The maximum number of pooled LDAP connections that will be maintained by the integration. If all pooled connections are in use new lookup requests will be queued (if too many requests are queued the integration will drop the request and report an error).',
-      default: 10,
-      type: 'number',
       userCanEdit: false,
       adminOnly: true
     },

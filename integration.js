@@ -6,6 +6,7 @@ const moment = require('moment');
 const config = require('./config/config');
 const genericPool = require('generic-pool');
 const once = require('lodash.once');
+const sleep = require('util').promisify(setTimeout);
 
 const generalizedTimeRegex = /\d{14}\.0Z/;
 const integer8Regex = /\d{18}/;
@@ -13,33 +14,41 @@ const integer8Regex = /\d{18}/;
 // contains the list of valid group search attributes
 let Logger = null;
 let pool = null;
-let consecutiveFailedClientCreates = 0;
 let previousMaxClients = 0;
+let clientCreationErrorCount = 0;
+
+async function _createClient(options) {
+  try {
+    if (clientCreationErrorCount > 0) {
+      Logger.error('Creating a client in the connection pool failed.  Preventing ');
+      await sleep(30000);
+    }
+
+    let clientOptions = {
+      url: options.url,
+      tlsOptions: {
+        rejectUnauthorized: config.request.rejectUnauthorized
+      },
+      connectTimeout: 5000,
+      timeout: 5000
+    };
+
+    Logger.debug(clientOptions, 'Adding new client to connection pool');
+    let client = new Client(clientOptions);
+
+    await client.bind(options.bindDN, options.password);
+    Logger.debug('New client is bound and available in pool');
+    return client;
+  } catch (ex) {
+    clientCreationErrorCount++;
+    throw ex;
+  }
+}
 
 function _getClientFactory(options) {
   let clientFactory = {
-    create: async function() {
-      try {
-        let clientOptions = {
-          url: options.url,
-          tlsOptions: {
-            rejectUnauthorized: config.request.rejectUnauthorized
-          },
-          connectTimeout: 5000,
-          timeout: 5000
-        };
-
-        Logger.debug(clientOptions, 'Adding new client to connection pool');
-
-        let client = new Client(clientOptions);
-
-        await client.bind(options.bindDN, options.password);
-        Logger.debug('New client is bound and available in pool');
-        consecutiveFailedClientCreates = 0;
-        return client;
-      } catch (ex) {
-        throw ex;
-      }
+    create: function() {
+      return _createClient(options);
     },
     destroy: async function(client) {
       return await client.unbind();
@@ -56,9 +65,10 @@ function startup(logger) {
 function _disconnectPool() {
   return new Promise((resolve, reject) => {
     if (pool) {
+      Logger.info("Attempting to drain pool");
       pool.drain().then(() => {
         pool.clear();
-        Logger.debug('Connection pool is drained and cleared');
+        Logger.info('Connection pool is drained and cleared');
         resolve();
       });
     } else {
@@ -67,17 +77,15 @@ function _disconnectPool() {
   });
 }
 
-function _poolOptionsChanged(options) {
-  if (options.maxClients !== previousMaxClients) {
-    previousMaxClients = options.maxClients;
-    return true;
-  } else {
-    return false;
-  }
+function _logConnectionError(err) {
+  Logger.error('LDAP Connection Pool factoryCreateError occurred');
+  Logger.error(err);
 }
 
 function _createPool(options, cbOnce, shutDownIntegrationOnce) {
   let localPool;
+
+  let logConnectionErrorOnce = once(_logConnectionError);
 
   const opts = {
     max: options.maxClients, // maximum size of the pool
@@ -91,9 +99,7 @@ function _createPool(options, cbOnce, shutDownIntegrationOnce) {
   localPool = genericPool.createPool(_getClientFactory(options), opts);
 
   localPool.on('factoryCreateError', function(err) {
-    Logger.error('LDAP Connection Pool factoryCreateError occurred');
-    Logger.error(err);
-
+    logConnectionErrorOnce(err);
     cbOnce({
       detail: err.message,
       stack: err.stack,
@@ -113,10 +119,11 @@ function _createPool(options, cbOnce, shutDownIntegrationOnce) {
 }
 
 function _shutDownIntegration() {
+  Logger.info("Starting shutdown of integration");
   _disconnectPool().finally(() => {
     setTimeout(() => {
       // Delay exiting the process by a second so logs can finish writing out
-      Logger.error('Exiting Integration Process');
+      Logger.info('Exiting Integration Process');
       process.exit();
     }, 250);
   });
