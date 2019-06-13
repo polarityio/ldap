@@ -94,9 +94,9 @@ module.exports = {
   options: [
     {
       key: 'url',
-      name: 'LDAP Server URL (Changes Require Integration Restart)',
+      name: 'LDAP Server URL (Change Requires Integration Restart)',
       description:
-        "URL for your LDAP server. (e.g., 'ldap://dc.domain.com' or 'ldaps://dc.domain.com')",
+        "URL for your LDAP server. (e.g., 'ldap://dc.domain.com' or 'ldaps://dc.domain.com'). If you make a change to this option you will need to restart the integration for the change to take effect. This setting must be configured as an admin-only setting.",
       default: '',
       type: 'text',
       userCanEdit: false,
@@ -104,9 +104,9 @@ module.exports = {
     },
     {
       key: 'bindDN',
-      name: 'Bind Distinguished Name (Changes Require Integration Restart)',
+      name: 'Bind Distinguished Name (Change Requires Integration Restart)',
       description:
-        "LDAP Bind DN (e.g., 'uid=tony.stark,ou=Users,o=5be4c382c583e54de6a3ff52,dc=jumpcloud,dc=com')",
+        "LDAP Bind DN (e.g., 'uid=tony.stark,ou=Users,o=5be4c382c583e54de6a3ff52,dc=jumpcloud,dc=com'). If you make a change to this option you will need to restart the integration for the change to take effect. This setting must be configured as an admin-only setting.",
       default: '',
       type: 'text',
       userCanEdit: false,
@@ -114,8 +114,8 @@ module.exports = {
     },
     {
       key: 'password',
-      name: 'Password',
-      description: 'Bind DN Password (Changes Require Integration Restart)',
+      name: 'Password (Change Requires Integration Restart)',
+      description: 'Bind DN Password. If you make a change to this option you will need to restart the integration for the change to take effect. This setting must be configured as an admin-only setting.',
       default: '',
       type: 'password',
       userCanEdit: false,
@@ -126,7 +126,7 @@ module.exports = {
       name:
         'Maximum Connection Pool Size (Changes Require Integration Restart)',
       description:
-        'The maximum number of pooled LDAP connections that will be maintained by the integration. If all pooled connections are in use new lookup requests will be queued (if too many requests are queued the integration will drop the request and report an error). IMPORTANT: After changing this option you must restart the integration for the changes to take place.',
+        'The maximum number of pooled LDAP connections that will be maintained by the integration. If all pooled connections are in use new lookup requests will be queued (if too many requests are queued the integration will drop the request and report an error). After changing this option you must restart the integration for the changes to take place.  This option must be set to "Only admins can view and edit". This setting must be configured as an admin-only setting.',
       default: 10,
       type: 'number',
       userCanEdit: false,
@@ -136,7 +136,7 @@ module.exports = {
       key: 'searchDN',
       name: 'Search DN',
       description:
-        "Search DN (e.g., 'ou=Users,o=5be4c382c583e54de6a3ff52,dc=jumpcloud,dc=com')",
+        "The distinguished name from where searches will start.  The integration will search the whole sub tree under the provided distinguished name (e.g., 'ou=Users,o=5be4c382c583e54de6a3ff52,dc=jumpcloud,dc=com').",
       default: '',
       type: 'text',
       userCanEdit: false,
@@ -146,40 +146,8 @@ module.exports = {
       key: 'userSearchAttribute',
       name: 'User Email Search Attribute',
       description:
-        'Select the attribute that should be used to search for a specific user',
-      default: {
-        value: 'userPrincipalName',
-        display: 'User Principal Name'
-      },
-      type: 'select',
-      options: [
-        {
-          value: 'distinguishedName',
-          display: 'Distinguished Name'
-        },
-        {
-          value: 'sAMAccountName',
-          display: 'SAM Account Name'
-        },
-        {
-          value: 'userPrincipalName',
-          display: 'User Principal Name'
-        },
-        {
-          value: 'mail',
-          display: 'Mail'
-        }
-      ],
-      multiple: false,
-      userCanEdit: false,
-      adminOnly: true
-    },
-    {
-      key: 'customUserSearchAttribute',
-      name: 'Custom User Email Search Attribute',
-      description:
-        'A custom user search email attribute (case sensitive) that will be used to compare against the email address being looked up.  This option will not be used if left blank and instead the `User Email Search Attribute` will be used.',
-      default: '',
+        'The search attribute for user objects (case sensitive).  This attribute should be an email address and will be compared against the email address being looked up.  Typical values are `userPrincipalName`, `disintguishedName`, `sAMAccountName`, or `mail`.',
+      default: 'userPrincipalName',
       type: 'text',
       userCanEdit: false,
       adminOnly: true
@@ -188,7 +156,7 @@ module.exports = {
       key: 'summaryUserAttributes',
       name: 'Summary User Attributes',
       description:
-        'Select user attributes you would like to display in the summary portion of the integration as tags',
+        'Select user attributes you would like to display in the summary portion of the integration as tags.',
       default: [
         {
           value: 'displayName',

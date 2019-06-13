@@ -174,7 +174,7 @@ async function _findUser(entityObj, options) {
 
     const { searchEntries } = await client.search(options.searchDN, {
       scope: 'sub', //possible values are `base`, `one`, or `sub` https://ldapwiki.com/wiki/LDAP%20Search%20Scopes
-      filter: `(userPrincipalName=${entityObj.value})`,
+      filter: `(${options.userSearchAttribute}=${entityObj.value})`,
       sizeLimit: 1
     });
 

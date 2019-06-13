@@ -15,9 +15,9 @@ The Polarity LDAP integration allows Polarity to search LDAP for user informatio
 
 ### LDAP Server URL
 
-*Admin Only Setting*
+*Admin Only Setting* | *Changes Require Integration Restart*
 
-URL for your LDAP server. This setting must be configured as an **admin-only setting** (i.e., each user cannot set their own value).
+URL for your LDAP server. This setting must be configured as an **admin-only setting** (i.e., each user cannot set their own value).  In addition, if you modify this value, you will need to restart the integration to ensure the connection pool is recreated.
 
 For example:
 
@@ -31,9 +31,9 @@ ldaps://dc.domain.com
 
 ### Bind Distinguished Name
 
-*Admin Only Setting*
+*Admin Only Setting* | *Changes Require Integration Restart*
 
-The Distinguised Name that the integration will attempt to bind as. This setting must be configured as an **admin-only setting** (i.e., each user cannot set their own value).
+The distinguished name that the integration will attempt to bind (authenticate) as. This setting must be configured as an **admin-only setting** (i.e., each user cannot set their own value). In addition, if you modify this value, you will need to restart the integration to ensure the connection pool is recreated.
 
 For example:
 
@@ -43,9 +43,15 @@ uid=tony.stark,ou=Users,o=5be4c382c583e54de6a3ff52,dc=jumpcloud,dc=com
 
 ### Password
 
-*Admin Only Setting*
+*Admin Only Setting* | *Changes Require Integration Restart*
 
-The LDAP Account Password for the provided `Bind Distinguished Name`. This setting must be configured as an **admin-only setting** (i.e., each user cannot set their own value).
+The LDAP Account Password for the provided `Bind Distinguished Name`. This setting must be configured as an **admin-only setting** (i.e., each user cannot set their own value). In addition, if you modify this value, you will need to restart the integration to ensure the connection pool is recreated.
+
+### Maximum Connection Pool Size
+
+*Admin Only Setting* | *Changes Require Integration Restart*
+
+The maximum number of pooled LDAP connections that will be maintained by the integration. If all pooled connections are in use new lookup requests will be queued (if too many requests are queued the integration will drop the request and report an error).  This option defaults to 10 but should be increased for larger deployments.  In general, you should have at least 1 connection per active integration user. 
 
 
 ### Search Distinguished Name
@@ -58,16 +64,7 @@ ou=Users,o=5be4c382c583e54de6a3ff52,dc=jumpcloud,dc=com
 
 ### User Email Search Attribute
 
-*Admin Only Setting*
-
-The user attribute that will be used to compare against the email address being looked up (i.e., this attribute should be the user's email address). This attribute defaults to `userPrincipalName`. This setting must be configured as an **admin-only setting** (i.e., each user cannot set their own value).
-
-
-### Custom User Email Search Attribute
-
-*Admin Only Setting* 
-
-A custom attribute to set that will be used to compare against the email address being looked up.  This option should be used if the email attribute in your LDAP system is not provided as an option in the above `User Email Search Attribute` dropdown list.  This option can be left blank.
+The search attribute for user objects (case sensitive).  This attribute should be an email address and will be compared against the email address being looked up.  Typical values are `userPrincipalName`, `disintguishedName`, `sAMAccountName`, and `mail`.
 
 ### Summary User Attributes
 
