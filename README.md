@@ -90,6 +90,34 @@ One or more user attributes you would like to display in the details portion of 
 Custom user attributes you would like to display in the details portion of the integration.  Provide a comma delimited list. Attributes are case sensitive.
 
 
+## Common Errors
+
+### LDAP Idle Timeout
+
+If you see the below error it means the connection in the connection pool has timed out due to inactivity.  When this occurs, the connection that is closed will be removed from the connection pool. 
+
+```json
+Request was out of sequence with another operation in progress. Code: 0x1
+```
+
+### Invalid LDAP Server URL
+
+If you see the below error the LDAP Server URL is probably incorrect.  Please double check the URL and ensure you have connectivity to the URL from the server.
+
+```json
+getaddrinfo ENOTFOUND
+```
+
+### Connection Pool Exhausted
+
+If you see the following error it means you need to increase the size of your connection pool via the `Maximum Connection Pool Size`.  
+
+```json
+max waitingClients count exceeded
+```
+
+
+
 ## Installation Instructions
 
 Installation instructions for integrations are provided on the [PolarityIO GitHub Page](https://polarityio.github.io/).
