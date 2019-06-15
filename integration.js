@@ -20,7 +20,9 @@ let clientCreationErrorCount = 0;
 async function _createClient(options) {
   try {
     if (clientCreationErrorCount > 0) {
-      Logger.error('Creating a client in the connection pool failed.  Preventing ');
+      Logger.error(
+        'Creating a client in the connection pool failed.  Preventing '
+      );
       await sleep(30000);
     }
 
@@ -52,6 +54,9 @@ function _getClientFactory(options) {
     },
     destroy: async function(client) {
       return await client.unbind();
+    },
+    validate: function(client) {
+      return Promise.resolve(client.connected);
     }
   };
 
@@ -65,7 +70,7 @@ function startup(logger) {
 function _disconnectPool() {
   return new Promise((resolve, reject) => {
     if (pool) {
-      Logger.info("Attempting to drain pool");
+      Logger.info('Attempting to drain pool');
       pool.drain().then(() => {
         pool.clear();
         Logger.info('Connection pool is drained and cleared');
@@ -91,7 +96,8 @@ function _createPool(options, cbOnce, shutDownIntegrationOnce) {
     max: options.maxClients, // maximum size of the pool
     min: Math.floor(options.maxClients / 4), // minimum size of the pool,
     maxWaitingClients: options.maxClients * 2,
-    acquireTimeoutMillis: 5000
+    acquireTimeoutMillis: 5000,
+    testOnBorrow: true
   };
 
   Logger.info({ poolOptions: opts }, 'Generating New Connection Pool');
@@ -119,7 +125,7 @@ function _createPool(options, cbOnce, shutDownIntegrationOnce) {
 }
 
 function _shutDownIntegration() {
-  Logger.info("Starting shutdown of integration");
+  Logger.info('Starting shutdown of integration');
   _disconnectPool().finally(() => {
     setTimeout(() => {
       // Delay exiting the process by a second so logs can finish writing out
@@ -172,6 +178,12 @@ async function _findUser(entityObj, options) {
   try {
     client = await pool.acquire();
 
+    Logger.info({ socket: client.socket }, 'Socket');
+    Logger.info(
+      { connected: client.socket.connected },
+      'Socket Connected Status'
+    );
+
     const { searchEntries } = await client.search(options.searchDN, {
       scope: 'sub', //possible values are `base`, `one`, or `sub` https://ldapwiki.com/wiki/LDAP%20Search%20Scopes
       filter: `(${options.userSearchAttribute}=${entityObj.value})`,
@@ -217,9 +229,12 @@ async function _findUser(entityObj, options) {
       }
     };
   } catch (ex) {
+    // We had an error so there is probably something wrong with this client.
     if (client) {
+      Logger.info(client, 'Client with error');
       pool.destroy(client);
     }
+
     throw ex;
   }
 }
