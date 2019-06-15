@@ -96,7 +96,7 @@ Custom user attributes you would like to display in the details portion of the i
 
 If you see the below error it means the connection in the connection pool has timed out due to inactivity.  When this occurs, the connection that is closed will be removed from the connection pool. 
 
-```json
+```
 Request was out of sequence with another operation in progress. Code: 0x1
 ```
 
@@ -104,15 +104,15 @@ Request was out of sequence with another operation in progress. Code: 0x1
 
 If you see the below error the LDAP Server URL is probably incorrect.  Please double check the URL and ensure you have connectivity to the URL from the server.
 
-```json
-getaddrinfo ENOTFOUND
+```
+getaddrinfo ENOTFOUND <LDAP Server URL>
 ```
 
 ### Connection Pool Exhausted
 
 If you see the following error it means you need to increase the size of your connection pool via the `Maximum Connection Pool Size`.  
 
-```json
+```
 max waitingClients count exceeded
 ```
 
