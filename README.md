@@ -71,7 +71,7 @@ ou=Users,o=5be4c382c583e54de6a3ff52,dc=jumpcloud,dc=com
 
 ### User Email Search Attribute
 
-The search attribute for user objects (case sensitive).  This attribute should be an email address and will be compared against the email address being looked up.  Typical values are `userPrincipalName`, `disintguishedName`, `sAMAccountName`, and `mail`.
+The search attribute for user objects (case sensitive).  This attribute should be an email address and will be compared against the email address being looked up.  Typical values are `userPrincipalName`, `disintguishedName`, `sAMAccountName`, or `mail`.
 
 ### Summary User Attributes
 
