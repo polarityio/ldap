@@ -92,20 +92,28 @@ Custom user attributes you would like to display in the details portion of the i
 
 ## Common Errors
 
-### LDAP Idle Timeout
-
-If you see the below error it means the connection in the connection pool has timed out due to inactivity.  When this occurs, the connection that is closed will be removed from the connection pool. 
-
-```
-Request was out of sequence with another operation in progress. Code: 0x1
-```
-
 ### Invalid LDAP Server URL
 
 If you see the below error the LDAP Server URL is probably incorrect.  Please double check the URL and ensure you have connectivity to the URL from the server.
 
 ```
 getaddrinfo ENOTFOUND <LDAP Server URL>
+```
+
+### Invalid Credentials
+
+If your setting for `Bind Distinguished Name` or `Password` are incorrect, you will see the following error: 
+
+```
+Invalid credentials during a bind operation. Code: 0x31
+```
+
+### Invalid Search DN
+
+If your `Search DN` setting is invalid or cannot be found, you will likely see the following error:
+
+```
+ Unknown error. Code: 0xa (err.code=10)
 ```
 
 ### Connection Pool Exhausted
@@ -116,7 +124,15 @@ If you see the following error it means you need to increase the size of your co
 max waitingClients count exceeded
 ```
 
+### Disconnected LDAP Client Connection
 
+The integration attempts to validate that LDAP connections are still connected prior to using them.  In some rare circumstances this validation may return a false positive and the connection will attempt to be used even when it is no longer connected (e.g., because of an idle connection timeout setting on your LDAP server).  If this happens, you will likely see the following error: 
+
+```
+Request was out of sequence with another operation in progress. Code: 0x1
+```
+
+When this error occurs the client will be removed from the connection pool.
 
 ## Installation Instructions
 
