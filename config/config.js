@@ -18,7 +18,7 @@ module.exports = {
   acronym: 'LDAP',
 
   logging: {
-    level: 'trace'
+    level: 'info'
   }, //trace, debug, info, warn, error, fatal
   /**
    * Description for this integration which is displayed in the Polarity integrations user interface
@@ -82,7 +82,7 @@ module.exports = {
      * to the ARIN servers without valid SSL certificates.  Please note that we do NOT recommending setting this
      * to false in a production environment.
      */
-    rejectUnauthorized: false
+    rejectUnauthorized: true
   },
   /**
    * Options that are displayed to the user/admin in the Polarity integration user-interface.  Should be structured
@@ -115,7 +115,8 @@ module.exports = {
     {
       key: 'password',
       name: 'Password (Change Requires Integration Restart)',
-      description: 'Bind DN Password. If you make a change to this option you will need to restart the integration for the change to take effect. This setting must be configured as an admin-only setting.',
+      description:
+        'Bind DN Password. If you make a change to this option you will need to restart the integration for the change to take effect. This setting must be configured as an admin-only setting.',
       default: '',
       type: 'password',
       userCanEdit: false,
