@@ -1,0 +1,13 @@
+<h1 class="p-title">
+    {{fa-icon "user" fixedWidth=true}} User Info
+</h1>
+{{#each details.userDetailsList as |attribute|}}
+    <div>
+        <span class="p-key">{{attribute.display}}: </span>
+        {{#if (eq attribute.type 'date')}}
+            <span class="p-value">{{moment-format attribute.value 'L LTS' timeZone=timezone}}</span>
+        {{else}}
+            <span class="p-value">{{attribute.value}}</span>
+        {{/if}}
+    </div>
+{{/each}}
