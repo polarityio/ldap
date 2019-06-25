@@ -3,9 +3,9 @@
         <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
         <span class="integration-text-color">
             {{#if (eq attribute.type 'date')}}
-                {{attribute.display}}: {{moment-format attribute.value 'L LTS' timeZone=timezone}}
+                {{humanize (dasherize attribute.display)}}: {{moment-format attribute.value 'L LTS' timeZone=timezone}}
             {{else}}
-                {{attribute.display}}: {{attribute.value}}
+                {{humanize (dasherize attribute.display)}}: {{attribute.value}}
             {{/if}}
         </span>
     </span>
