@@ -134,6 +134,30 @@ Request was out of sequence with another operation in progress. Code: 0x1
 
 When this error occurs the client will be removed from the connection pool.
 
+> This error will usually occur after the integration has been running for a while.
+
+### Search Distinguished Name
+
+If your `Search Distinguised Name` option is invalid you can also see the following error: 
+
+```
+Request was out of sequence with another operation in progress. Code: 0x1
+```
+
+Please make sure your Search Distinguished Name is valid DN
+
+```
+// Valid Search DN
+cn=Users,dc=breachintelligence,dc=net
+
+// Invalid Search DN
+cn=Users
+```
+
+You can distinguish this error from the `Disconnected LDAP Client Connection` because it will happen right away on the first search after restarting the integration.
+
+> Note this error 
+
 ## Installation Instructions
 
 Installation instructions for integrations are provided on the [PolarityIO GitHub Page](https://polarityio.github.io/).
