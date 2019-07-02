@@ -1,14 +1,12 @@
 polarity.export = PolarityComponent.extend({
   details: Ember.computed.alias('block.data.details'),
-  summaryAttributes: Ember.computed(
-    'block.userOptions.summaryUserAttributes',
-    'block.data.details',
+  summaryAttributes: Ember.computed('block.data.details.userOptions',
     function() {
       const summaryUserAttributes = this.get(
-        'block.userOptions.summaryUserAttributes'
+        'details.userOptions.summaryUserAttributes'
       );
       const customSummaryUserAttributes = this.get(
-        'block.userOptions.summaryCustomUserAttributes'
+        'details.userOptions.summaryCustomUserAttributes'
       );
       const values = [];
       const userDetails = this.get('block.data.details.userSummaryHash');
