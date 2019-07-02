@@ -2,13 +2,13 @@
   "main": "./integration.js",
   "name": "LDAP",
   "description": "Polarity LDAP Integration",
-  "version": "3.2.0-beta",
+  "version": "3.2.1-beta",
   "license": "MIT",
   "author": "Polarity",
   "private": true,
   "dependencies": {
     "async": "^2.6.2",
-    "ldapts": "^1.7.0",
+    "ldapts": "^1.8.0",
     "moment": "~2.24.0",
     "generic-pool": "^3.7.1",
     "lodash.once": "^4.1.1"

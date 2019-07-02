@@ -211,6 +211,12 @@ async function _findUser(entityObj, options) {
     );
 
     const details = {
+      userOptions: {
+        summaryUserAttributes: options.summaryUserAttributes,
+        summaryCustomUserAttributes: options.summaryCustomUserAttributes,
+        detailedUserAttributes: options.detailedUserAttributes,
+        detailedCustomUserAttributes: options.detailedCustomUserAttributes
+      },
       userDetailsList: _processUserResult(user, detailAttributes)
         .userAttributeList,
       userSummaryHash: _processUserResult(user, summaryAttributes)
