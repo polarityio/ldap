@@ -71,7 +71,17 @@ ou=Users,o=5be4c382c583e54de6a3ff52,dc=jumpcloud,dc=com
 
 ### User Email Search Attribute
 
-The search attribute for user objects (case sensitive).  This attribute should be an email address and will be compared against the email address being looked up.  Typical values are `userPrincipalName`, `disintguishedName`, `sAMAccountName`, or `mail`.
+The search attribute for user objects (case sensitive).  This attribute should be an email address and will be compared against the email address being looked up.  Typical values are `userPrincipalName`, `distinguishedName`, `sAMAccountName`, or `mail`.  If this option is left blank, the `Advanced Search Filter` below will be used.
+
+### Advanced Search Filter (Optional)
+
+The search filter used to identify the user object to be displayed by the integration.  If left blank, a strict equality check will be done against the attribute specified by the `User Email Search Attribute`. An example search filter to search two different attributes would be:
+
+```
+(|(mail={{entity}})(sAMAccountName={{entity}}))
+```
+
+> Note that `{{entity}}` will be replaced with the value of the entity being looked up.
 
 ### Summary User Attributes
 
