@@ -173,6 +173,16 @@ function doLookup(entities, options, cb) {
   );
 }
 
+function _getFilter(entityObj, options) {
+  let filter = '';
+  if (options.userSearchAttribute.length > 0) {
+    filter = `(${options.userSearchAttribute}=${entityObj.value})`;
+  } else {
+    filter = options.searchFilter.replace(/{{entity}}/g, entityObj.value);
+  }
+  return filter;
+}
+
 async function _findUser(entityObj, options) {
   let client;
   try {
@@ -186,7 +196,7 @@ async function _findUser(entityObj, options) {
 
     const { searchEntries } = await client.search(options.searchDN, {
       scope: 'sub', //possible values are `base`, `one`, or `sub` https://ldapwiki.com/wiki/LDAP%20Search%20Scopes
-      filter: `(${options.userSearchAttribute}=${entityObj.value})`,
+      filter: _getFilter(entityObj, options),
       sizeLimit: 1
     });
 
