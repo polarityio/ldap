@@ -1,3 +1,13 @@
-div.group-container{
+div.group-container {
   margin-bottom: 10px;
+}
+
+.array-item {
+  font-weight: bold;
+  &:after {
+    content: ", ";
+  }
+  &:last-child::after {
+    content: "";
+  }
 }

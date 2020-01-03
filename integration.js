@@ -321,6 +321,8 @@ function parseAttributeValue(value) {
       value: moment(value / 1e4 - 1.16444736e13).toISOString(),
       type: 'date'
     };
+  } else if (Array.isArray(value)) {
+    return { value, type: 'array' };
   } else {
     return { value, type: 'string' };
   }

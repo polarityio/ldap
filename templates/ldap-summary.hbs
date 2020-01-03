@@ -4,6 +4,11 @@
         <span class="integration-text-color">
             {{#if (eq attribute.type 'date')}}
                 {{humanize (dasherize attribute.display)}}: {{moment-format attribute.value 'L LTS' timeZone=timezone}}
+            {{else if (eq attribute.type 'array')}}
+                {{humanize (dasherize attribute.display)}}:
+                {{#each attribute.value as | value |}}
+                    <span class="array-item">{{value}}</span>
+                {{/each}}
             {{else}}
                 {{humanize (dasherize attribute.display)}}: {{attribute.value}}
             {{/if}}
