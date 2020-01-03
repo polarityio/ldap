@@ -6,6 +6,11 @@
         <span class="p-key">{{attribute.display}}: </span>
         {{#if (eq attribute.type 'date')}}
             <span class="p-value">{{moment-format attribute.value 'L LTS' timeZone=timezone}}</span>
+        {{else if (eq attribute.type 'array')}}
+            {{humanize (dasherize attribute.display)}}:
+            {{#each attribute.value as | value |}}
+                    <span class="array-item">{{value}}</span>
+            {{/each}}
         {{else}}
             <span class="p-value">{{attribute.value}}</span>
         {{/if}}
