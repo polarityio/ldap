@@ -2,10 +2,13 @@ div.group-container {
   margin-bottom: 10px;
 }
 
-.array-item:after {
-  content: ', ';
-}
-
-.array-item:last-child::after {
+.array-item {
+  font-weight: bold;
+  &:after {
+    content: ', ';
+  }
+  &:last-child::after {
   content: "";
+
+  }
 }
