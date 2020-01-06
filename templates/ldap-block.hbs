@@ -3,11 +3,15 @@
 </h1>
 {{#each details.userDetailsList as |attribute|}}
     <div>
-        <span class="p-key">{{attribute.display}}: </span>
-        {{#if (eq attribute.type 'date')}}
-            <span class="p-value">{{moment-format attribute.value 'L LTS' timeZone=timezone}}</span>
+        <span class="p-key">{{humanize (dasherize attribute.display)}}: </span>
+        {{#if (eq attribute.type 'array')}}
+            {{#each attribute.value as | value |}}
+                <span class="array-item p-value">{{value}}</span>
+            {{/each}}
+        {{else if (eq attribute.type 'date')}}
+                <span class="p-value">{{moment-format attribute.value 'L LTS' timeZone=timezone}}</span>
         {{else}}
-            <span class="p-value">{{attribute.value}}</span>
+                <span class="p-value">{{attribute.value}}</span>
         {{/if}}
     </div>
 {{/each}}
