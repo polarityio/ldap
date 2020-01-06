@@ -2,15 +2,15 @@
     <span class="integration-summary-tag integration-background-color integration-border-color">
         <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
         <span class="integration-text-color">
+            {{humanize (dasherize attribute.display)}}:
             {{#if (eq attribute.type 'date')}}
-                {{humanize (dasherize attribute.display)}}: {{moment-format attribute.value 'L LTS' timeZone=timezone}}
+                {{moment-format attribute.value 'L LTS' timeZone=timezone}}
             {{else if (eq attribute.type 'array')}}
-                {{humanize (dasherize attribute.display)}}:
                 {{#each attribute.value as | value |}}
                     <span class="array-item">{{value}}</span>
                 {{/each}}
             {{else}}
-                {{humanize (dasherize attribute.display)}}: {{attribute.value}}
+                {{attribute.value}}
             {{/if}}
         </span>
     </span>
