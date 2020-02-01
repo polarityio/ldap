@@ -1,5 +1,8 @@
 'use strict';
 
+//process.env.DEBUG = 'ldapts';
+
+
 const async = require('async');
 const { Client } = require('ldapts');
 const moment = require('moment');
@@ -14,14 +17,13 @@ const integer8Regex = /\d{18}/;
 // contains the list of valid group search attributes
 let Logger = null;
 let pool = null;
-let previousMaxClients = 0;
 let clientCreationErrorCount = 0;
 
 async function _createClient(options) {
   try {
     if (clientCreationErrorCount > 0) {
       Logger.error(
-        'Creating a client in the connection pool failed.  Preventing '
+        'Creating a client in the connection pool failed.'
       );
       await sleep(30000);
     }
@@ -56,7 +58,7 @@ function _getClientFactory(options) {
       return await client.unbind();
     },
     validate: function(client) {
-      return Promise.resolve(client.connected);
+      return Promise.resolve(client.isConnected);
     }
   };
 
@@ -82,15 +84,25 @@ function _disconnectPool() {
   });
 }
 
-function _logConnectionError(err) {
-  Logger.error('LDAP Connection Pool factoryCreateError occurred');
+function _logFactoryCreateError(err) {
+  Logger.error(
+    {
+      poolSize: pool.size,
+      poolAvailable: pool.available,
+      poolBorrowed: pool.borrowed,
+      poolPending: pool.pending,
+      poolMax: pool.max,
+      poolMin: pool.min
+    },
+    'LDAP Connection Pool factoryCreateError occurred'
+  );
   Logger.error(err);
 }
 
 function _createPool(options, cbOnce, shutDownIntegrationOnce) {
   let localPool;
 
-  let logConnectionErrorOnce = once(_logConnectionError);
+  let logFactoryCreateErrorOnce = once(_logFactoryCreateError);
 
   const opts = {
     max: options.maxClients, // maximum size of the pool
@@ -105,7 +117,7 @@ function _createPool(options, cbOnce, shutDownIntegrationOnce) {
   localPool = genericPool.createPool(_getClientFactory(options), opts);
 
   localPool.on('factoryCreateError', function(err) {
-    logConnectionErrorOnce(err);
+    logFactoryCreateErrorOnce(err);
     cbOnce({
       detail: err.message,
       stack: err.stack,
@@ -117,7 +129,17 @@ function _createPool(options, cbOnce, shutDownIntegrationOnce) {
   });
 
   localPool.on('factoryDestroyError', function(err) {
-    Logger.error('LDAP Connection Pool: factoryDestroyError occurred');
+    Logger.error(
+      {
+        poolSize: pool.size,
+        poolAvailable: pool.available,
+        poolBorrowed: pool.borrowed,
+        poolPending: pool.pending,
+        poolMax: pool.max,
+        poolMin: pool.min
+      },
+      'LDAP Connection Pool: factoryDestroyError occurred'
+    );
     Logger.error(err);
   });
 
@@ -138,9 +160,9 @@ function _shutDownIntegration() {
 function doLookup(entities, options, cb) {
   const lookupResults = [];
   let cbOnce = once(cb);
-  let shutdownIntegrationOnce = once(_shutDownIntegration);
 
   if (pool === null) {
+    let shutdownIntegrationOnce = once(_shutDownIntegration);
     pool = _createPool(options, cbOnce, shutdownIntegrationOnce);
   }
 
@@ -188,9 +210,9 @@ async function _findUser(entityObj, options) {
   try {
     client = await pool.acquire();
 
-    Logger.info({ socket: client.socket }, 'Socket');
-    Logger.info(
-      { connected: client.socket.connected },
+    Logger.debug({ socket: client.socket }, 'Socket');
+    Logger.debug(
+      { connected: client.isConnected },
       'Socket Connected Status'
     );
 
