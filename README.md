@@ -73,6 +73,8 @@ ou=Users,o=5be4c382c583e54de6a3ff52,dc=jumpcloud,dc=com
 
 The search attribute for user objects (case sensitive).  This attribute should be an email address and will be compared against the email address being looked up.  Typical values are `userPrincipalName`, `distinguishedName`, `sAMAccountName`, or `mail`.  If this option is left blank, the `Advanced Search Filter` below will be used.
 
+Attribute searches are case insensitive.
+
 ### Advanced Search Filter (Optional)
 
 The search filter used to identify the user object to be displayed by the integration.  If left blank, a strict equality check will be done against the attribute specified by the `User Email Search Attribute`. An example search filter to search two different attributes would be:
@@ -80,6 +82,8 @@ The search filter used to identify the user object to be displayed by the integr
 ```
 (|(mail={{entity}})(sAMAccountName={{entity}}))
 ```
+
+Attribute searches are case insensitive.
 
 > Note that `{{entity}}` will be replaced with the value of the entity being looked up.
 
@@ -166,7 +170,17 @@ cn=Users
 
 You can distinguish this error from the `Disconnected LDAP Client Connection` because it will happen right away on the first search after restarting the integration.
 
-> Note this error 
+### Timeout Waiting for new LDAP Client
+
+The integration makes use of a connection pool.  Once the maximum number of clients are checked from the pool additional requests are put into a queue.  If a request has to wait longer than 5 seconds before getting a connection, the request will time out and you will see the below error: 
+
+```
+ResourceRequest timed out
+```
+
+Note that internally this time out duration is controlled by the `acquireTimeoutMillis` configuration option on the LDAP client object (this setting is not exposed via integration options).
+
+You can typically resolve this error by increasing the `Maximum Connection Pool Size` option.  If you're running the integration in real-time, you can also reduce the amount of requests by setting the integration to On-Demand Only.
 
 ## Installation Instructions
 
