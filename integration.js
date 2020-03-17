@@ -2,7 +2,6 @@
 
 //process.env.DEBUG = 'ldapts';
 
-
 const async = require('async');
 const { Client } = require('ldapts');
 const moment = require('moment');
@@ -22,9 +21,7 @@ let clientCreationErrorCount = 0;
 async function _createClient(options) {
   try {
     if (clientCreationErrorCount > 0) {
-      Logger.error(
-        'Creating a client in the connection pool failed.'
-      );
+      Logger.error('Creating a client in the connection pool failed.');
       await sleep(30000);
     }
 
@@ -45,8 +42,56 @@ async function _createClient(options) {
     return client;
   } catch (ex) {
     clientCreationErrorCount++;
+    Logger.error({ ex }, '_createClient exception thrown');
     throw ex;
   }
+}
+
+/**
+ * RFC 2254 Escaping of filter strings
+ * Raw                     Escaped
+ * (o=Parens (R Us))       (o=Parens \28R Us\29)
+ * (cn=star*)              (cn=star\2A)
+ * (filename=C:\MyFile)    (filename=C:\5cMyFile)
+ *
+ * @param {string|Buffer} input
+ */
+function _escapeFilter(input) {
+  let escapedResult = '';
+  if (Buffer.isBuffer(input)) {
+    for (const inputChar of input) {
+      if (inputChar < 16) {
+        escapedResult += `\\0${inputChar.toString(16)}`;
+      } else {
+        escapedResult += `\\${inputChar.toString(16)}`;
+      }
+    }
+  } else {
+    for (const inputChar of input) {
+      switch (inputChar) {
+        case '*':
+          escapedResult += '\\2a';
+          break;
+        case '(':
+          escapedResult += '\\28';
+          break;
+        case ')':
+          escapedResult += '\\29';
+          break;
+        case '\\':
+          escapedResult += '\\5c';
+          break;
+        case '\0':
+          escapedResult += '\\00';
+          break;
+        default:
+          escapedResult += inputChar;
+          break;
+      }
+    }
+  }
+
+  return escapedResult;
 }
 
 function _getClientFactory(options) {
@@ -55,9 +100,11 @@ function _getClientFactory(options) {
       return _createClient(options);
     },
     destroy: async function(client) {
+      Logger.trace('Destroying client', { isConnected: client.isConnected });
       return await client.unbind();
     },
     validate: function(client) {
+      Logger.trace('Validating client', { isConnected: client.isConnected });
       return Promise.resolve(client.isConnected);
     }
   };
@@ -107,8 +154,9 @@ function _createPool(options, cbOnce, shutDownIntegrationOnce) {
   const opts = {
     max: options.maxClients, // maximum size of the pool
     min: Math.floor(options.maxClients / 4), // minimum size of the pool,
-    maxWaitingClients: options.maxClients * 2,
-    acquireTimeoutMillis: 5000,
+    // maxWaitingClients must be at least 1 for the single client request that will be serviced.
+    maxWaitingClients: options.maxClients * 10,
+    acquireTimeoutMillis: 7000,
     testOnBorrow: true
   };
 
@@ -198,9 +246,9 @@ function doLookup(entities, options, cb) {
 function _getFilter(entityObj, options) {
   let filter = '';
   if (options.userSearchAttribute.length > 0) {
-    filter = `(${options.userSearchAttribute}=${entityObj.value})`;
+    filter = `(${options.userSearchAttribute}=${_escapeFilter(entityObj.value)})`;
   } else {
-    filter = options.searchFilter.replace(/{{entity}}/g, entityObj.value);
+    filter = options.searchFilter.replace(/{{entity}}/g, _escapeFilter(entityObj.value));
   }
   return filter;
 }
@@ -211,10 +259,7 @@ async function _findUser(entityObj, options) {
     client = await pool.acquire();
 
     Logger.debug({ socket: client.socket }, 'Socket');
-    Logger.debug(
-      { connected: client.isConnected },
-      'Socket Connected Status'
-    );
+    Logger.debug({ connected: client.isConnected }, 'Socket Connected Status');
 
     const { searchEntries } = await client.search(options.searchDN, {
       scope: 'sub', //possible values are `base`, `one`, or `sub` https://ldapwiki.com/wiki/LDAP%20Search%20Scopes
