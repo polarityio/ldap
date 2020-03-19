@@ -1,7 +1,5 @@
 'use strict';
 
-//process.env.DEBUG = 'ldapts';
-
 const async = require('async');
 const { Client } = require('ldapts');
 const moment = require('moment');
@@ -34,11 +32,22 @@ async function _createClient(options) {
       timeout: 5000
     };
 
-    Logger.debug(clientOptions, 'Adding new client to connection pool');
-    let client = new Client(clientOptions);
+    Logger.debug(
+      { clientOptions },
+      options.disableConnectionPooling
+        ? 'Creating new client'
+        : 'Adding new client to connection pool'
+    );
 
+    let client = new Client(clientOptions);
     await client.bind(options.bindDN, options.password);
-    Logger.debug('New client is bound and available in pool');
+
+    Logger.debug(
+      options.disableConnectionPooling
+        ? 'New client is bound and ready for use'
+        : 'New client is bound and available in pool'
+    );
+
     return client;
   } catch (ex) {
     clientCreationErrorCount++;
@@ -99,12 +108,17 @@ function _getClientFactory(options) {
     create: function() {
       return _createClient(options);
     },
-    destroy: async function(client) {
-      Logger.trace('Destroying client', { isConnected: client.isConnected });
-      return await client.unbind();
+    destroy: function(client) {
+      Logger.debug({ isConnected: client.isConnected }, 'Destroying client');
+      return client.unbind();
     },
     validate: function(client) {
-      Logger.trace('Validating client', { isConnected: client.isConnected });
+      Logger.debug(
+        {
+          isConnected: client.isConnected
+        },
+        'Validating client'
+      );
       return Promise.resolve(client.isConnected);
     }
   };
@@ -132,17 +146,7 @@ function _disconnectPool() {
 }
 
 function _logFactoryCreateError(err) {
-  Logger.error(
-    {
-      poolSize: pool.size,
-      poolAvailable: pool.available,
-      poolBorrowed: pool.borrowed,
-      poolPending: pool.pending,
-      poolMax: pool.max,
-      poolMin: pool.min
-    },
-    'LDAP Connection Pool factoryCreateError occurred'
-  );
+  _logPoolStats('error', 'LDAP Connection Pool factoryCreateError occurred');
   Logger.error(err);
 }
 
@@ -152,7 +156,9 @@ function _createPool(options, cbOnce, shutDownIntegrationOnce) {
   let logFactoryCreateErrorOnce = once(_logFactoryCreateError);
 
   const opts = {
-    max: options.maxClients, // maximum size of the pool
+    // maximum size of the pool.  If connection pooling is disabled, then we set the max connection pool size to 1
+    // which effectively disables connection pooling.
+    max: options.maxClients,
     min: Math.floor(options.maxClients / 4), // minimum size of the pool,
     // maxWaitingClients must be at least 1 for the single client request that will be serviced.
     maxWaitingClients: options.maxClients * 10,
@@ -177,21 +183,28 @@ function _createPool(options, cbOnce, shutDownIntegrationOnce) {
   });
 
   localPool.on('factoryDestroyError', function(err) {
-    Logger.error(
-      {
-        poolSize: pool.size,
-        poolAvailable: pool.available,
-        poolBorrowed: pool.borrowed,
-        poolPending: pool.pending,
-        poolMax: pool.max,
-        poolMin: pool.min
-      },
+    _logPoolStats(
+      'error',
       'LDAP Connection Pool: factoryDestroyError occurred'
     );
     Logger.error(err);
   });
 
   return localPool;
+}
+
+function _logPoolStats(level, msg) {
+  Logger[level](
+    {
+      poolSize: pool.size,
+      poolAvailable: pool.available,
+      poolBorrowed: pool.borrowed,
+      poolPending: pool.pending,
+      poolMax: pool.max,
+      poolMin: pool.min
+    },
+    msg
+  );
 }
 
 function _shutDownIntegration() {
@@ -209,13 +222,15 @@ function doLookup(entities, options, cb) {
   const lookupResults = [];
   let cbOnce = once(cb);
 
-  if (pool === null) {
+  // Do a one time connection pool creation as long as connection pooling is not disabled.
+  if (pool === null && options.disableConnectionPooling === false) {
     let shutdownIntegrationOnce = once(_shutDownIntegration);
     pool = _createPool(options, cbOnce, shutdownIntegrationOnce);
   }
 
-  async.each(
+  async.eachLimit(
     entities,
+    options.maxClients,
     (entityObj, next) => {
       _findUser(entityObj, options)
         .then((result) => {
@@ -227,7 +242,11 @@ function doLookup(entities, options, cb) {
         });
     },
     (err) => {
-      Logger.debug({ lookupResults }, 'Lookup Results');
+      Logger.trace({ lookupResults }, 'Lookup Results');
+      Logger.debug(
+        { numLookupResults: lookupResults.length },
+        'Lookup Results Length'
+      );
       if (err) {
         Logger.error('Error encountered while trying to execute _findUser');
         Logger.error(err);
@@ -246,20 +265,77 @@ function doLookup(entities, options, cb) {
 function _getFilter(entityObj, options) {
   let filter = '';
   if (options.userSearchAttribute.length > 0) {
-    filter = `(${options.userSearchAttribute}=${_escapeFilter(entityObj.value)})`;
+    filter = `(${options.userSearchAttribute}=${_escapeFilter(
+      entityObj.value
+    )})`;
   } else {
-    filter = options.searchFilter.replace(/{{entity}}/g, _escapeFilter(entityObj.value));
+    filter = options.searchFilter.replace(
+      /{{entity}}/g,
+      _escapeFilter(entityObj.value)
+    );
   }
   return filter;
+}
+
+/**
+ * Helper method which returns a new client.  If connection pooling is disabled the client is created
+ * and returned directly.  If connection pooling is enabled the client is fetched from the connection pool.
+ * @param options
+ * @returns {Promise<undefined|*>}
+ * @private
+ */
+async function _getClient(options) {
+  if (options.disableConnectionPooling) {
+    return await _createClient(options);
+  } else {
+    return await pool.acquire();
+  }
+}
+
+/**
+ * Helper method which releases a client back to the pool if connection pooling is enabled.  If connection pooling
+ * is disabled, the client is unbound to close the connection.
+ * @param client
+ * @param options
+ * @returns {Promise<any>}
+ * @private
+ */
+async function _releaseClient(client, options) {
+  if (options.disableConnectionPooling) {
+    return await client.unbind();
+  } else {
+    return await pool.release(client);
+  }
+}
+
+/**
+ * Helper method which destroys the client out of the pool if connection pooling is enabled.  Otherwise, we attempt
+ * to unbind the client if it exists.
+ * @param client
+ * @param options
+ * @returns {Promise<void|*>}
+ * @private
+ */
+async function _destroyClient(client, options) {
+  if (client) {
+    if (options.disableConnectionPooling) {
+      return await client.unbind();
+    } else {
+      return pool.destroy(client);
+    }
+  }
 }
 
 async function _findUser(entityObj, options) {
   let client;
   try {
-    client = await pool.acquire();
+    client = await _getClient(options);
 
-    Logger.debug({ socket: client.socket }, 'Socket');
-    Logger.debug({ connected: client.isConnected }, 'Socket Connected Status');
+    Logger.trace({ socket: client.socket }, 'Socket');
+    Logger.debug(
+      { connected: client.isConnected, entity: entityObj.value },
+      'Running LDAP search'
+    );
 
     const { searchEntries } = await client.search(options.searchDN, {
       scope: 'sub', //possible values are `base`, `one`, or `sub` https://ldapwiki.com/wiki/LDAP%20Search%20Scopes
@@ -267,7 +343,7 @@ async function _findUser(entityObj, options) {
       sizeLimit: 1
     });
 
-    pool.release(client);
+    await _releaseClient(client, options);
 
     if (searchEntries.length === 0) {
       return {
@@ -313,11 +389,8 @@ async function _findUser(entityObj, options) {
     };
   } catch (ex) {
     // We had an error so there is probably something wrong with this client.
-    if (client) {
-      Logger.info(client, 'Client with error');
-      pool.destroy(client);
-    }
-
+    Logger.error(client, 'Client with error');
+    _destroyClient(client);
     throw ex;
   }
 }
@@ -395,59 +468,7 @@ function parseAttributeValue(value) {
   }
 }
 
-function validateOptions(userOptions, cb) {
-  Logger.trace('Options to validate', userOptions);
-  Logger.trace('Options to validate', userOptions);
-
-  let errors = [];
-
-  validateOption(
-    errors,
-    userOptions,
-    'host',
-    'You must provide a valid ldap host.'
-  );
-
-  validateOption(
-    errors,
-    userOptions,
-    'baseDN',
-    'You must provide a baseDN used by your installation of Active Directory'
-  );
-
-  validateOption(
-    errors,
-    userOptions,
-    'username',
-    'You must provide a valid username'
-  );
-
-  validateOption(
-    errors,
-    userOptions,
-    'password',
-    'You must provide a valid password'
-  );
-
-  cb(null, errors);
-}
-
-function validateOption(errors, options, optionName, errMessage) {
-  if (
-    !options[optionName] ||
-    typeof options[optionName].value !== 'string' ||
-    (typeof options[optionName].value === 'string' &&
-      options[optionName].value.length === 0)
-  ) {
-    errors.push({
-      key: optionName,
-      message: errMessage
-    });
-  }
-}
-
 module.exports = {
   doLookup: doLookup,
   startup: startup
-  //validateOptions: validateOptions
 };
