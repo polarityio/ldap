@@ -125,11 +125,22 @@ module.exports = {
     {
       key: 'maxClients',
       name:
-        'Maximum Connection Pool Size (Changes Require Integration Restart)',
+        'Maximum Concurrent Search Requests (Changes Require Integration Restart)',
       description:
-        'The maximum number of pooled LDAP connections that will be maintained by the integration. If all pooled connections are in use new lookup requests will be queued (if too many requests are queued the integration will drop the request and report an error). After changing this option you must restart the integration for the changes to take place.  This option must be set to "Only admins can view and edit". This setting must be configured as an admin-only setting.',
+        'The maximum number of concurrent search requests that can run at a time.  When using connection pooling, this value is the total number of pooled connections.  If all pooled connections are in use, new lookup requests will be queued (if too many requests are queued the integration will drop the request and report an error). After changing this option you must restart the integration for the changes to take place.  This option must be set to "Only admins can view and edit". This setting must be configured as an admin-only setting.',
       default: 10,
       type: 'number',
+      userCanEdit: false,
+      adminOnly: true
+    },
+    {
+      key: 'disableConnectionPooling',
+      name:
+        'Disable Connection Pooling (Change Requires Integration Restart)',
+      description:
+        'If checked, the integration will not use connection pooling.  When connection pooling is disabled, each search request to the LDAP server will bind and unbind a new connection.  If you disable connection pooling, this integration should be set to On-Demand Only. This option must be set to "Only admins can view and edit". This setting must be configured as an admin-only setting.',
+      default: false,
+      type: 'boolean',
       userCanEdit: false,
       adminOnly: true
     },
