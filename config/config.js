@@ -135,8 +135,7 @@ module.exports = {
     },
     {
       key: 'disableConnectionPooling',
-      name:
-        'Disable Connection Pooling (Change Requires Integration Restart)',
+      name: 'Disable Connection Pooling (Change Requires Integration Restart)',
       description:
         'If checked, the integration will not use connection pooling.  When connection pooling is disabled, each search request to the LDAP server will bind and unbind a new connection.  If you disable connection pooling, this integration should be set to On-Demand Only. This option must be set to "Only admins can view and edit". This setting must be configured as an admin-only setting.',
       default: false,

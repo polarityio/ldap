@@ -60,6 +60,13 @@ The maximum number of pooled LDAP connections that will be maintained by the int
 
 > If you encounter the error "max waitingClients count exceeded" you will need to increase the maximum connection pool size.  
 
+### Disable Connection Pooling
+
+*Admin Only Setting* | *Changes Require Integration Restart*
+
+If checked, the integration will not use connection pooling.  When connection pooling is disabled, each search request to the LDAP server will bind and unbind a new connection.  If you disable connection pooling, this integration should be set to **On-Demand Only**. This option must be set to "Only admins can view and edit". This setting must be configured as an admin-only setting.
+
+> If you are encountering `ECONNRESET` or `ECONNREFUSED` errors after a short period of time (e.g., 15 minutes), please try disabling connection pooling (checking this option) 
 
 ### Search Distinguished Name
 
