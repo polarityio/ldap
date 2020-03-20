@@ -52,11 +52,11 @@ uid=tony.stark,ou=Users,o=5be4c382c583e54de6a3ff52,dc=jumpcloud,dc=com
 
 The LDAP Account Password for the provided `Bind Distinguished Name`. This setting must be configured as an **admin-only setting** (i.e., each user cannot set their own value). In addition, if you modify this value, you will need to restart the integration to ensure the connection pool is recreated.
 
-### Maximum Connection Pool Size
+### Maximum Concurrent Search Requests
 
 *Admin Only Setting* | *Changes Require Integration Restart*
 
-The maximum number of pooled LDAP connections that will be maintained by the integration. If all pooled connections are in use new lookup requests will be queued (if too many requests are queued the integration will drop the request and report an error).  This option defaults to 10 but should be increased for larger deployments.  In general, you should have at least 1 connection per active integration user. 
+The maximum number of concurrent search requests that can run at a time.  When using connection pooling, this value is the total number of pooled connections.  If all pooled connections are in use, new lookup requests will be queued (if too many requests are queued the integration will drop the request and report an error). After changing this option you must restart the integration for the changes to take place.  This option must be set to "Only admins can view and edit". This setting must be configured as an admin-only setting.
 
 > If you encounter the error "max waitingClients count exceeded" you will need to increase the maximum connection pool size.  
 
