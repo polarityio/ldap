@@ -360,6 +360,18 @@ module.exports = {
       type: 'text',
       userCanEdit: true,
       adminOnly: false
+    },
+    {
+      key: 'attributeDisplayMappings',
+      name: 'Attribute Display Name Mappings',
+      description:
+        'A comma delimited list of attribute display name mappings which let you change the display name of an attribute in the integration.  This can be used to provide human readable ' +
+        'attributes.  Each mapping should be the original attribute name followed by a colon and then the desired display name.  For example, if the attribute is "flm" and you want that to display as "front line manager", ' +
+        'you would enter "flm:Front line manager".  Attribute names are case sensitive.',
+      default: 'cn:Common name,dc:Domain component',
+      type: 'text',
+      userCanEdit: false,
+      adminOnly: true
     }
   ]
 };

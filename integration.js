@@ -6,6 +6,7 @@ const moment = require('moment');
 const config = require('./config/config');
 const genericPool = require('generic-pool');
 const once = require('lodash.once');
+const { userAccountControlToStrings } = require('./lib/user-account-control');
 const sleep = require('util').promisify(setTimeout);
 
 const generalizedTimeRegex = /\d{14}\.0Z/;
@@ -15,6 +16,8 @@ const integer8Regex = /\d{18}/;
 let Logger = null;
 let pool = null;
 let clientCreationErrorCount = 0;
+let previousAttributeDisplayMappingsString = null;
+let attributeDisplayNameMappings = {};
 
 async function _createClient(options) {
   try {
@@ -29,9 +32,10 @@ async function _createClient(options) {
       timeout: 5000
     };
 
-    if(options.url.startsWith('ldaps')){
+    if (options.url.startsWith('ldaps')) {
       clientOptions.tlsOptions = {};
-      clientOptions.tlsOptions.rejectUnauthorized = config.request.rejectUnauthorized
+      clientOptions.tlsOptions.rejectUnauthorized =
+        config.request.rejectUnauthorized;
     }
 
     Logger.debug(
@@ -107,14 +111,14 @@ function _escapeFilter(input) {
 
 function _getClientFactory(options) {
   let clientFactory = {
-    create: function() {
+    create: function () {
       return _createClient(options);
     },
-    destroy: function(client) {
+    destroy: function (client) {
       Logger.debug({ isConnected: client.isConnected }, 'Destroying client');
       return client.unbind();
     },
-    validate: function(client) {
+    validate: function (client) {
       Logger.debug(
         {
           isConnected: client.isConnected
@@ -172,7 +176,7 @@ function _createPool(options, cbOnce, shutDownIntegrationOnce) {
 
   localPool = genericPool.createPool(_getClientFactory(options), opts);
 
-  localPool.on('factoryCreateError', function(err) {
+  localPool.on('factoryCreateError', function (err) {
     logFactoryCreateErrorOnce(err);
     cbOnce({
       detail: err.message,
@@ -184,7 +188,7 @@ function _createPool(options, cbOnce, shutDownIntegrationOnce) {
     shutDownIntegrationOnce();
   });
 
-  localPool.on('factoryDestroyError', function(err) {
+  localPool.on('factoryDestroyError', function (err) {
     _logPoolStats(
       'error',
       'LDAP Connection Pool: factoryDestroyError occurred'
@@ -228,6 +232,25 @@ function doLookup(entities, options, cb) {
   if (pool === null && options.disableConnectionPooling === false) {
     let shutdownIntegrationOnce = once(_shutDownIntegration);
     pool = _createPool(options, cbOnce, shutdownIntegrationOnce);
+  }
+
+  if (
+    previousAttributeDisplayMappingsString === null ||
+    previousAttributeDisplayMappingsString !== options.attributeDisplayMappings
+  ) {
+    // attributeDisplayNameMappings is an object which is keyed on the attribute and provides the display name
+    // for that attribute
+    attributeDisplayNameMappings = options.attributeDisplayMappings
+      .split(',')
+      .reduce((acc, token) => {
+        // token is of the form `attribute:displayName` (e.g., `cn:Common Name`)
+        const parts = token.trim().split(':');
+        const attribute = parts[0].trim();
+        const displayName = parts[1].trim();
+        acc[attribute] = displayName;
+        return acc;
+      }, {});
+    previousAttributeDisplayMappingsString = options.attributeDisplayMappings;
   }
 
   async.eachLimit(
@@ -356,6 +379,8 @@ async function _findUser(entityObj, options) {
 
     let user = searchEntries[0];
 
+    Logger.trace({ user }, 'LDAP User Lookup result');
+
     const summaryAttributes = getAttributes(
       options.summaryUserAttributes,
       options.summaryCustomUserAttributes
@@ -392,7 +417,7 @@ async function _findUser(entityObj, options) {
   } catch (ex) {
     // We had an error so there is probably something wrong with this client.
     Logger.error(client, 'Client with error');
-    _destroyClient(client);
+    await _destroyClient(client);
     throw ex;
   }
 }
@@ -409,12 +434,27 @@ function getAttributes(attributes, customAttributesString) {
     .reduce((accum, value) => {
       value = value.trim();
       if (value.length > 0) {
-        accum.push({ value: value, display: value });
+        accum.push({
+          value: value,
+          // if we have a custom display name mapping use it
+          display: attributeDisplayNameMappings[value]
+            ? attributeDisplayNameMappings[value]
+            : null
+        });
       }
       return accum;
     }, []);
 
-  return attributes.concat(customAttributes);
+  const processedAttributes = attributes.map((attribute) => {
+    return {
+      value: attribute.value,
+      display: attributeDisplayNameMappings[attribute.value]
+        ? attributeDisplayNameMappings[attribute.value]
+        : attribute.display
+    }
+  })
+
+  return processedAttributes.concat(customAttributes);
 }
 
 /**
@@ -429,15 +469,19 @@ function _processUserResult(user, userAttributes) {
   const userAttributeHash = {};
 
   userAttributes.forEach((attr) => {
-    if (user[attr.value]) {
-      const parsedValue = parseAttributeValue(user[attr.value]);
+    const attributeName = attr.value;
+    const attributeValue = user[attributeName];
+    if (attributeValue) {
+      const parsedValue = parseAttributeValue(attributeName, attributeValue);
       userAttributeList.push({
         value: parsedValue.value,
+        name: attributeName,
         display: attr.display,
         type: parsedValue.type
       });
-      userAttributeHash[attr.value] = {
+      userAttributeHash[attributeName] = {
         value: parsedValue.value,
+        name: attributeName,
         display: attr.display,
         type: parsedValue.type
       };
@@ -452,7 +496,14 @@ function _processUserResult(user, userAttributes) {
  * @param value
  * @returns {*}
  */
-function parseAttributeValue(value) {
+function parseAttributeValue(attributeName, value) {
+  if (attributeName === 'userAccountControl') {
+    return {
+      value: userAccountControlToStrings(parseInt(value, 10)),
+      type: 'tag'
+    };
+  }
+
   if (generalizedTimeRegex.test(value)) {
     return {
       value: moment(value, 'YYYYMMDDHHmmss.Z').toISOString(),
@@ -471,6 +522,6 @@ function parseAttributeValue(value) {
 }
 
 module.exports = {
-  doLookup: doLookup,
-  startup: startup
+  doLookup,
+  startup
 };

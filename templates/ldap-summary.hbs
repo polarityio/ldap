@@ -2,7 +2,11 @@
     <span {{on "click" (optional this.scrollToIntegration)}} class="integration-summary-tag integration-background-color integration-border-color">
         <span class="acronym integration-text-bold-color">{{block.acronym}}</span>
         <span class="integration-text-color">
-            {{humanize (dasherize attribute.display)}}:
+            {{#if attribute.display}}
+              {{attribute.display}}:
+            {{else}}
+              {{humanize (dasherize attribute.name)}}:
+            {{/if}}
             {{#if (eq attribute.type 'date')}}
                 {{moment-format attribute.value 'L LTS' timeZone=timezone}}
             {{else if (eq attribute.type 'array')}}
