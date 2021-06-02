@@ -9,10 +9,10 @@
             {{/if}}
             {{#if (eq attribute.type 'date')}}
                 {{moment-format attribute.value 'L LTS' timeZone=timezone}}
-            {{else if (eq attribute.type 'array')}}
-                {{#each attribute.value as | value |}}
-                    <span class="array-item">{{value}}</span>
-                {{/each}}
+            {{else if (or (eq attribute.type 'array') (eq attribute.type 'tag'))}}
+                  {{#each attribute.value as | value |}}
+                      <span class="array-item">{{value}}</span>
+                  {{/each}}
             {{else}}
                 {{attribute.value}}
             {{/if}}

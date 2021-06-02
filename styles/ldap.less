@@ -2,10 +2,10 @@ div.group-container {
   margin-bottom: 10px;
 }
 
-.array-list-item{
-  background-color: #eee;
+.array-list-item {
   margin: 4px 0px;
   padding: 3px;
+  background-color: #eee;
 }
 
 .tag {
@@ -16,12 +16,37 @@ div.group-container {
   display: inline-block;
 }
 
+.p-action {
+  word-break: break-all;
+}
+.group-member-container {
+  margin-bottom: 10px;
+
+  .member-list-item {
+    line-height: 1.2em;
+    padding: 0px 0px 0px 0px;
+    margin: 0px 0px 0px 10px;
+  }
+}
+
+.user-line {
+  padding: 3px;
+
+  &:nth-child(even) {
+    background-color: #eee;
+  }
+}
+
+.break-all{
+  word-break: break-all;
+}
 
 .array-item {
+  word-break: break-all;
   &:after {
-    content: ", ";
+    content: ', ';
   }
   &:last-child::after {
-    content: "";
+    content: '';
   }
 }
