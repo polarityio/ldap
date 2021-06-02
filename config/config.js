@@ -278,6 +278,10 @@ module.exports = {
         {
           value: 'distinguishedName',
           display: 'Distinguished Name'
+        },
+        {
+          value: 'memberOf',
+          display: 'Member Of'
         }
       ],
       type: 'select',
@@ -321,6 +325,10 @@ module.exports = {
         {
           value: 'mail',
           display: 'Mail'
+        },
+        {
+          value: 'memberOf',
+          display: 'Member Of'
         },
         {
           value: 'pwdLastSet',
