@@ -8,7 +8,7 @@
 
 The Polarity LDAP integration allows Polarity to search LDAP for user information.  If your LDAP implementation returns a `memberOf` attribute, the integration will display group information for the user and allow you to view users within the group.  In addition, the integration will convert the `userAccountControl` attribute into human readable form.  
 
-<img src="images/overview.png" width="50%">
+<img src="images/overlay.png" width="50%">
 
 ## Connection Pooling
 
