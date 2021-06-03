@@ -6,11 +6,9 @@
 
 > The LDAP integration is a successor to the previous ActiveDirectory integration which has been deprecated.  New users should install the LDAP integration as it is more configurable and significantly more performant when querying your LDAP server due to the use of connection pooling.
 
-The Polarity LDAP integration allows Polarity to search LDAP for user information.  
+The Polarity LDAP integration allows Polarity to search LDAP for user information.  If your LDAP implementation returns a `memberOf` attribute, the integration will display group information for the user and allow you to view users within the group.  In addition, the integration will convert the `userAccountControl` attribute into human readable form.  
 
-| ![image](images/overview.png) |
-|---|
-|*LDAP Example*|
+<img src="images/overlay.png" width="50%">
 
 ## Connection Pooling
 
@@ -109,6 +107,30 @@ One or more user attributes you would like to display in the details portion of 
 ### Custom Detailed User Attributes
 
 Custom user attributes you would like to display in the details portion of the integration.  Provide a comma delimited list. Attributes are case sensitive.
+
+### Attribute Display Name Mappings
+
+A comma delimited list of attribute display name mappings which let you change the display name of an attribute in the integration. This can be used to provide human-readable attributes. Each mapping should be the original attribute name followed by a colon and then the desired display name. For example, if the attribute is "flm" and you want that to display as "front line manager", you would enter "flm:Front line manager". Attribute names are case-sensitive.
+
+Example:
+
+```
+cn:Common name,dc:Domain component,uSNChanged:Name Changed,pwdLastSet:Password Last Set
+```
+
+### Display Simplfied Group Names
+
+If checked, group names will only show the leaf entry of the fully qualified group name. For example, if the full group name is "CN=PolarityUsers,CN=Users,DC=polarity,DC=io", when this option is checked the group name would be displayed as "PolarityUsers"
+
+### Username Attribute
+
+The case-sensitive LDAP attribute which represents the account's username or full name. This value is used to display group membership. (defaults to "sAMAccountName").
+
+### Mail Attribute
+
+The case-sensitive LDAP attribute which contains the account's email address. This value is used to display group membership. (defaults to "mail").
+
+
 
 
 ## Common Errors

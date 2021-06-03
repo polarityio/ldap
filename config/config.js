@@ -227,6 +227,10 @@ module.exports = {
           display: 'Mail'
         },
         {
+          value: 'memberOf',
+          display: 'Member Of'
+        },
+        {
           value: 'pwdLastSet',
           display: 'Pwd Last Set'
         },
@@ -278,6 +282,14 @@ module.exports = {
         {
           value: 'distinguishedName',
           display: 'Distinguished Name'
+        },
+        {
+          value: 'userAccountControl',
+          display: 'User Account Control'
+        },
+        {
+          value: 'memberOf',
+          display: 'Member Of'
         }
       ],
       type: 'select',
@@ -323,6 +335,10 @@ module.exports = {
           display: 'Mail'
         },
         {
+          value: 'memberOf',
+          display: 'Member Of'
+        },
+        {
           value: 'pwdLastSet',
           display: 'Pwd Last Set'
         },
@@ -360,6 +376,49 @@ module.exports = {
       type: 'text',
       userCanEdit: true,
       adminOnly: false
+    },
+    {
+      key: 'attributeDisplayMappings',
+      name: 'Attribute Display Name Mappings',
+      description:
+        'A comma delimited list of attribute display name mappings which let you change the display name of an attribute in the integration.  This can be used to provide human-readable ' +
+        'attributes.  Each mapping should be the original attribute name followed by a colon and then the desired display name.  For example, if the attribute is "flm" and you want that to display as "front line manager", ' +
+        'you would enter "flm:Front line manager".  Attribute names are case-sensitive.',
+      default: 'cn:Common name,dc:Domain component',
+      type: 'text',
+      userCanEdit: false,
+      adminOnly: true
+    },
+    {
+      key: 'simplifiedGroupNames',
+      name: 'Display Simplified Group Names',
+      description:
+        'If checked, group names will only show the leaf entry of the fully qualified group name.  For example, if the full group name is "CN=PolarityUsers,CN=Users,DC=polarity,DC=io", when this option is checked ' +
+        'the group name would be displayed as "PolarityUsers".  Group names are only shown if your LDAP implementation includes a "memberOf" attribute.',
+      default: false,
+      type: 'boolean',
+      userCanEdit: false,
+      adminOnly: true
+    },
+    {
+      key: 'usernameAttribute',
+      name: 'Username Attribute',
+      description:
+        'The case-sensitive LDAP attribute which represents the account\'s username or full name.  This value is used to display group membership.  (defaults to "sAMAccountName").  Group membership is only shown if your LDAP implementation includes a "memberof" attribute.',
+      default: 'sAMAccountName',
+      type: 'text',
+      userCanEdit: false,
+      adminOnly: true
+    },
+    {
+      key: 'mailAttribute',
+      name: 'Mail Attribute',
+      description:
+        'The case-sensitive LDAP attribute which contains the account\'s email address.  This value is used to display group membership.  (defaults to "mail").  Group membership is only shown if your LDAP implementation includes a "memberof" attribute.',
+      default: 'mail',
+      type: 'text',
+      userCanEdit: false,
+      adminOnly: true
     }
   ]
 };

@@ -6,8 +6,11 @@ const moment = require('moment');
 const config = require('./config/config');
 const genericPool = require('generic-pool');
 const once = require('lodash.once');
+const { userAccountControlToStrings } = require('./lib/user-account-control');
+const { simpleGroupName } = require('./lib/member-of');
 const sleep = require('util').promisify(setTimeout);
 
+const MAX_USERS_TO_RETURN_IN_GROUP = 25;
 const generalizedTimeRegex = /\d{14}\.0Z/;
 const integer8Regex = /\d{18}/;
 
@@ -15,6 +18,8 @@ const integer8Regex = /\d{18}/;
 let Logger = null;
 let pool = null;
 let clientCreationErrorCount = 0;
+let previousAttributeDisplayMappingsString = null;
+let attributeDisplayNameMappings = {};
 
 async function _createClient(options) {
   try {
@@ -29,9 +34,10 @@ async function _createClient(options) {
       timeout: 5000
     };
 
-    if(options.url.startsWith('ldaps')){
+    if (options.url.startsWith('ldaps')) {
       clientOptions.tlsOptions = {};
-      clientOptions.tlsOptions.rejectUnauthorized = config.request.rejectUnauthorized
+      clientOptions.tlsOptions.rejectUnauthorized =
+        config.request.rejectUnauthorized;
     }
 
     Logger.debug(
@@ -107,14 +113,14 @@ function _escapeFilter(input) {
 
 function _getClientFactory(options) {
   let clientFactory = {
-    create: function() {
+    create: function () {
       return _createClient(options);
     },
-    destroy: function(client) {
+    destroy: function (client) {
       Logger.debug({ isConnected: client.isConnected }, 'Destroying client');
       return client.unbind();
     },
-    validate: function(client) {
+    validate: function (client) {
       Logger.debug(
         {
           isConnected: client.isConnected
@@ -172,7 +178,7 @@ function _createPool(options, cbOnce, shutDownIntegrationOnce) {
 
   localPool = genericPool.createPool(_getClientFactory(options), opts);
 
-  localPool.on('factoryCreateError', function(err) {
+  localPool.on('factoryCreateError', function (err) {
     logFactoryCreateErrorOnce(err);
     cbOnce({
       detail: err.message,
@@ -184,7 +190,7 @@ function _createPool(options, cbOnce, shutDownIntegrationOnce) {
     shutDownIntegrationOnce();
   });
 
-  localPool.on('factoryDestroyError', function(err) {
+  localPool.on('factoryDestroyError', function (err) {
     _logPoolStats(
       'error',
       'LDAP Connection Pool: factoryDestroyError occurred'
@@ -228,6 +234,25 @@ function doLookup(entities, options, cb) {
   if (pool === null && options.disableConnectionPooling === false) {
     let shutdownIntegrationOnce = once(_shutDownIntegration);
     pool = _createPool(options, cbOnce, shutdownIntegrationOnce);
+  }
+
+  if (
+    previousAttributeDisplayMappingsString === null ||
+    previousAttributeDisplayMappingsString !== options.attributeDisplayMappings
+  ) {
+    // attributeDisplayNameMappings is an object which is keyed on the attribute and provides the display name
+    // for that attribute
+    attributeDisplayNameMappings = options.attributeDisplayMappings
+      .split(',')
+      .reduce((acc, token) => {
+        // token is of the form `attribute:displayName` (e.g., `cn:Common Name`)
+        const parts = token.trim().split(':');
+        const attribute = parts[0].trim();
+        const displayName = parts[1].trim();
+        acc[attribute] = displayName;
+        return acc;
+      }, {});
+    previousAttributeDisplayMappingsString = options.attributeDisplayMappings;
   }
 
   async.eachLimit(
@@ -356,6 +381,8 @@ async function _findUser(entityObj, options) {
 
     let user = searchEntries[0];
 
+    Logger.trace({ user }, 'LDAP User Lookup result');
+
     const summaryAttributes = getAttributes(
       options.summaryUserAttributes,
       options.summaryCustomUserAttributes
@@ -372,9 +399,9 @@ async function _findUser(entityObj, options) {
         detailedUserAttributes: options.detailedUserAttributes,
         detailedCustomUserAttributes: options.detailedCustomUserAttributes
       },
-      userDetailsList: _processUserResult(user, detailAttributes)
+      userDetailsList: _processUserResult(user, detailAttributes, options)
         .userAttributeList,
-      userSummaryHash: _processUserResult(user, summaryAttributes)
+      userSummaryHash: _processUserResult(user, summaryAttributes, options)
         .userAttributeHash
     };
 
@@ -392,7 +419,7 @@ async function _findUser(entityObj, options) {
   } catch (ex) {
     // We had an error so there is probably something wrong with this client.
     Logger.error(client, 'Client with error');
-    _destroyClient(client);
+    await _destroyClient(client, options);
     throw ex;
   }
 }
@@ -409,41 +436,80 @@ function getAttributes(attributes, customAttributesString) {
     .reduce((accum, value) => {
       value = value.trim();
       if (value.length > 0) {
-        accum.push({ value: value, display: value });
+        accum.push({
+          value: value,
+          // if we have a custom display name mapping use it
+          display: attributeDisplayNameMappings[value]
+            ? attributeDisplayNameMappings[value]
+            : null
+        });
       }
       return accum;
     }, []);
 
-  return attributes.concat(customAttributes);
+  const processedAttributes = attributes.map((attribute) => {
+    return {
+      value: attribute.value,
+      display: attributeDisplayNameMappings[attribute.value]
+        ? attributeDisplayNameMappings[attribute.value]
+        : attribute.display
+    };
+  });
+
+  return processedAttributes.concat(customAttributes);
 }
 
 /**
  * Converts the user object into an array of user attributes which is easier for our template to render
  * @param user
  * @param options
+ * @param userAttributes
  * @returns {Object}
  * @private
  */
-function _processUserResult(user, userAttributes) {
+function _processUserResult(user, userAttributes, options) {
   const userAttributeList = [];
   const userAttributeHash = {};
+  let memberOfAttribute = null;
+  let userAccountControlAttribute = null;
 
   userAttributes.forEach((attr) => {
-    if (user[attr.value]) {
-      const parsedValue = parseAttributeValue(user[attr.value]);
-      userAttributeList.push({
+    const attributeName = attr.value;
+    const attributeValue = user[attributeName];
+    if (attributeValue) {
+      const parsedValue = parseAttributeValue(
+        attributeName,
+        attributeValue,
+        options
+      );
+
+      const attributeObject = {
         value: parsedValue.value,
-        display: attr.display,
-        type: parsedValue.type
-      });
-      userAttributeHash[attr.value] = {
-        value: parsedValue.value,
+        originalValue: parsedValue.originalValue,
+        name: attributeName,
         display: attr.display,
         type: parsedValue.type
       };
+
+      if(attributeName === 'memberOf'){
+        memberOfAttribute = attributeObject;
+      } else if(attributeName === 'userAccountControl'){
+        userAccountControlAttribute = attributeObject;
+      } else {
+        userAttributeList.push(attributeObject);
+      }
+      userAttributeHash[attributeName] = attributeObject;
     }
   });
 
+  // This is a simplistic way to ensure that the userAccountControl and memberOf attributes always come last
+  // when rendering the template as we render in array order.
+  if(userAccountControlAttribute){
+    userAttributeList.push(userAccountControlAttribute);
+  }
+  if(memberOfAttribute){
+    userAttributeList.push(memberOfAttribute);
+  }
   return { userAttributeList, userAttributeHash };
 }
 
@@ -452,25 +518,132 @@ function _processUserResult(user, userAttributes) {
  * @param value
  * @returns {*}
  */
-function parseAttributeValue(value) {
+function parseAttributeValue(attributeName, value, options) {
+  if (attributeName === 'userAccountControl') {
+    return {
+      originalValue: value,
+      value: userAccountControlToStrings(parseInt(value, 10)),
+      type: 'tag'
+    };
+  }
+
+  if (
+    attributeName === 'memberOf' &&
+    options.simplifiedGroupNames &&
+    Array.isArray(value)
+  ) {
+    return {
+      originalValue: value,
+      value: value.map((group) => simpleGroupName(group)),
+      type: 'array'
+    };
+  }
+
   if (generalizedTimeRegex.test(value)) {
     return {
+      originalValue: value,
       value: moment(value, 'YYYYMMDDHHmmss.Z').toISOString(),
       type: 'date'
     };
   } else if (integer8Regex.test(value)) {
     return {
+      originalValue: value,
       value: moment(value / 1e4 - 1.16444736e13).toISOString(),
       type: 'date'
     };
   } else if (Array.isArray(value)) {
-    return { value, type: 'array' };
+    return { value, originalValue: value, type: 'array' };
   } else {
-    return { value, type: 'string' };
+    return { value, originalValue: value, type: 'string' };
   }
 }
 
+async function onMessage(payload, options, cb) {
+  const group = payload.group;
+  let client;
+  try {
+    let cbOnce = once(cb);
+
+    // Do a one time connection pool creation as long as connection pooling is not disabled.
+    if (pool === null && options.disableConnectionPooling === false) {
+      let shutdownIntegrationOnce = once(_shutDownIntegration);
+      pool = _createPool(options, cbOnce, shutdownIntegrationOnce);
+    }
+
+    client = await _getClient(options);
+
+    Logger.trace({ socket: client.socket }, 'Socket');
+    Logger.debug(
+      { connected: client.isConnected, group },
+      'Running LDAP Group search'
+    );
+
+    const { searchEntries } = await client.search(options.searchDN, {
+      scope: 'sub', //possible values are `base`, `one`, or `sub` https://ldapwiki.com/wiki/LDAP%20Search%20Scopes
+      filter: `(&(objectCategory=user)(memberOf=${group}))`,
+      sizeLimit: MAX_USERS_TO_RETURN_IN_GROUP
+    });
+
+    const users = searchEntries.map(user => {
+      return {
+        name: user[options.usernameAttribute],
+        mail: user[options.mailAttribute]
+      }
+    });
+
+    await _releaseClient(client, options);
+    cb(null, {
+      users
+    });
+  } catch (error) {
+    // We had an error so there is probably something wrong with this client.
+    Logger.error(error, 'Client with error');
+    await _destroyClient(client, options);
+    cb(error);
+  }
+}
+
+function validateOptions(options, cb){
+  let errors = [];
+
+  const url = options.url.value;
+
+  // Either userSearchAttribute or searchFilter must be set
+  const userSearchAttribute = options.userSearchAttribute.value;
+  const searchFilter = options.searchFilter.value;
+
+  if (typeof url === 'string' && url.length === 0) {
+    errors.push({
+      key: 'url',
+      message: 'You must provide a URL for your LDAP server.'
+    });
+  }
+
+  if (typeof url === 'string' && !url.startsWith('ldap://') && !url.startsWith('ldaps://')) {
+    errors.push({
+      key: 'url',
+      message: 'The provided url must begin with "ldap://" or "ldaps://".'
+    });
+  }
+
+  if(typeof userSearchAttribute === 'string' && userSearchAttribute.length === 0 &&
+  typeof searchFilter === 'string' && searchFilter.length === 0){
+    errors.push({
+      key: 'userSearchAttribute',
+      message: 'You must provide either a "User Search Email Attribute" or an "Advanced Search Filter"'
+    });
+    errors.push({
+      key: 'searchFilter',
+      message: 'You must provide either a "User Search Email Attribute" or an "Advanced Search Filter"'
+    });
+  }
+
+  cb(null, errors);
+}
+
 module.exports = {
-  doLookup: doLookup,
-  startup: startup
+  doLookup,
+  startup,
+  onMessage,
+  validateOptions
 };

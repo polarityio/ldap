@@ -1,17 +1,65 @@
 <h1 class="p-title">
-    {{fa-icon "user" fixedWidth=true}} User Info
+    {{fa-icon "user-circle" fixedWidth=true}} User Info
 </h1>
 {{#each details.userDetailsList as |attribute|}}
     <div>
-        <span class="p-key">{{humanize (dasherize attribute.display)}}: </span>
-        {{#if (eq attribute.type 'array')}}
-            {{#each attribute.value as | value |}}
-                <span class="array-item p-value">{{value}}</span>
-            {{/each}}
-        {{else if (eq attribute.type 'date')}}
-                <span class="p-value">{{moment-format attribute.value 'L LTS' timeZone=timezone}}</span>
+      {{#if (eq attribute.name "memberOf")}}
+        <h1 class="p-title">{{fa-icon icon="users" fixedWidth=true}} Groups</h1>
+      {{else if (eq attribute.name "userAccountControl")}}
+        <h1 class="p-title">{{fa-icon icon="id-card" fixedWidth=true}} User Account Control</h1>
+      {{else}}
+        {{#if attribute.display}}
+          <span class="p-key">{{attribute.display}}: </span>
         {{else}}
-                <span class="p-value">{{attribute.value}}</span>
+          <span class="p-key">{{humanize (dasherize attribute.name)}}: </span>
         {{/if}}
+      {{/if}}
+
+      {{!-- MemberOf Group Rendering --}}
+      {{#if (eq attribute.name "memberOf")}}
+        {{#each attribute.value as | groupName groupIndex|}}
+          {{#let (get details._groups groupIndex) as | group |}}
+            <div class="mb-1">
+              <a class="p-action" {{on "click" (action "toggleGroup" (get attribute.originalValue groupIndex) groupIndex)}}>
+                {{groupName}}
+                {{!-- ({{#if group.isExpanded}}hide{{else}}view{{/if}} group members --}}
+                {{#if group.isLoading}}
+                  {{fa-icon icon="spinner-third" spin=true fixedWidth=true}}
+                {{else if group.isExpanded}}
+                  {{fa-icon icon="chevron-up" fixedWidth=true}}
+                {{else}}
+                  {{fa-icon icon="chevron-down" fixedWidth=true}}
+                {{/if}}
+              </a>
+            </div>
+            {{#if group.isExpanded}}
+              <div class="group-member-container">
+                {{#each group.users as |user|}}
+                  <div class="user-line">{{user.name}} &lt;{{user.mail}}&gt;</div>
+                {{/each}}
+              </div>
+              {{#if (eq group.users.length 25)}}
+                <span class="p-footnote">Showing first 25 users in group</span>
+              {{/if}}
+            {{/if}}
+          {{/let}}
+        {{/each}}
+      {{!-- Generic Array Rendering --}}
+      {{else if (eq attribute.type 'array')}}
+          {{#each attribute.value as | value |}}
+              <div class="array-list-item p-value">{{value}}</div>
+          {{/each}}
+      {{!-- Generic Tag Rendering --}}
+      {{else if (eq attribute.type 'tag')}}
+          {{#each attribute.value as | value |}}
+            <span class="tag">{{value}}</span>
+          {{/each}}
+      {{!-- Generic Date Rendering --}}
+      {{else if (eq attribute.type 'date')}}
+              <span class="p-value">{{moment-format attribute.value 'L LTS' timeZone=timezone}}</span>
+      {{!-- General Primitive Rendering --}}
+      {{else}}
+              <span class="p-value">{{attribute.value}}</span>
+      {{/if}}
     </div>
 {{/each}}
