@@ -227,6 +227,10 @@ module.exports = {
           display: 'Mail'
         },
         {
+          value: 'memberOf',
+          display: 'Member Of'
+        },
+        {
           value: 'pwdLastSet',
           display: 'Pwd Last Set'
         },
@@ -278,6 +282,10 @@ module.exports = {
         {
           value: 'distinguishedName',
           display: 'Distinguished Name'
+        },
+        {
+          value: 'userAccountControl',
+          display: 'User Account Control'
         },
         {
           value: 'memberOf',
