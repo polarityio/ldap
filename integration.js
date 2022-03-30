@@ -34,12 +34,6 @@ async function _createClient(options) {
       timeout: 5000
     };
 
-    if (options.url.startsWith('ldaps')) {
-      clientOptions.tlsOptions = {};
-      clientOptions.tlsOptions.rejectUnauthorized =
-        config.request.rejectUnauthorized;
-    }
-
     Logger.debug(
       { clientOptions },
       options.disableConnectionPooling
