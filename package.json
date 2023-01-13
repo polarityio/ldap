@@ -1,8 +1,8 @@
 {
-  "main": "./integration.js",
   "name": "LDAP",
+  "version": "3.5.3-beta",
+  "main": "./integration.js",
   "description": "Polarity LDAP Integration",
-  "version": "3.5.2-beta",
   "license": "MIT",
   "author": "Polarity",
   "private": true,
