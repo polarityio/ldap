@@ -5,12 +5,9 @@
     "level": "info"
   },
   "description": "Search your Lightweight Directory Access Protocol (LDAP) server by email address",
-  "entityTypes": [
-    "email"
-  ],
-  "styles": [
-    "./styles/ldap.less"
-  ],
+  "entityTypes": ["email"],
+  "defaultColor": "light-blue",
+  "styles": ["./styles/ldap.less"],
   "block": {
     "component": {
       "file": "./components/ldap-block.js"

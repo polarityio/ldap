@@ -29,6 +29,7 @@ module.exports = {
   description:
     'Search your Lightweight Directory Access Protocol (LDAP) server by email address',
   entityTypes: ['email'],
+  defaultColor: 'light-blue',
   /**
    * An array of style files (css or less) that will be included for your integration. Any styles specified in
    * the below files can be used in your custom template.
@@ -124,8 +125,7 @@ module.exports = {
     },
     {
       key: 'maxClients',
-      name:
-        'Maximum Concurrent Search Requests (Changes Require Integration Restart)',
+      name: 'Maximum Concurrent Search Requests (Changes Require Integration Restart)',
       description:
         'The maximum number of concurrent search requests that can run at a time.  When using connection pooling, this value is the total number of pooled connections.  If all pooled connections are in use, new lookup requests will be queued (if too many requests are queued the integration will drop the request and report an error). After changing this option you must restart the integration for the changes to take place.  This option must be set to "Only admins can view and edit". This setting must be configured as an admin-only setting.',
       default: 10,
