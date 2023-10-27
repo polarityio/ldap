@@ -53,9 +53,14 @@ async function _createClient(options) {
     return client;
   } catch (ex) {
     clientCreationErrorCount++;
-    Logger.error({ ex }, '_createClient exception thrown');
+    let jsonError = parseErrorToReadableJSON(ex);
+    Logger.error({ error: jsonError }, '_createClient exception thrown');
     throw ex;
   }
+}
+
+function parseErrorToReadableJSON(error) {
+  return JSON.parse(JSON.stringify(error, Object.getOwnPropertyNames(error)));
 }
 
 /**
