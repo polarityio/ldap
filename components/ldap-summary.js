@@ -30,12 +30,6 @@ polarity.export = PolarityComponent.extend({
           }
         });
 
-      if (values.length === 0) {
-        values.push({
-          value: 'User Found'
-        });
-      }
-
       return values;
     }
   )

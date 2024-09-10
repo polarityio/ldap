@@ -35,7 +35,7 @@
             {{#if group.isExpanded}}
               <div class="group-member-container">
                 {{#each group.users as |user|}}
-                  <div class="user-line">{{user.name}} &lt;{{user.mail}}&gt;</div>
+                  <div class="user-line">{{user.name}} {{#if user.mail}}&lt;{{user.mail}}&gt;{{/if}}</div>
                 {{/each}}
               </div>
               {{#if (eq group.users.length 25)}}
