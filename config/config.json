@@ -187,8 +187,8 @@
         }
       ],
       "multiple": true,
-      "userCanEdit": true,
-      "adminOnly": false
+      "userCanEdit": false,
+      "adminOnly": true
     },
     {
       "key": "summaryCustomUserAttributes",
@@ -196,8 +196,8 @@
       "description": "Custom user attributes you would like to display in the summary portion of the integration as tags.  Provide a comma delimited list. Attributes are case sensitive.",
       "default": "",
       "type": "text",
-      "userCanEdit": true,
-      "adminOnly": false
+      "userCanEdit": false,
+      "adminOnly": true
     },
     {
       "key": "detailedUserAttributes",
@@ -205,20 +205,72 @@
       "description": "Select user attributes you would like to display in the details portion of the integration",
       "default": [
         {
-          "value": "displayName",
-          "display": "Display Name"
+          "value": "cn",
+          "display": "CN"
+        },
+        {
+          "value": "comment",
+          "display": "Comment"
+        },
+        {
+          "value": "description",
+          "display": "Description"
         },
         {
           "value": "distinguishedName",
           "display": "Distinguished Name"
         },
         {
-          "value": "userAccountControl",
-          "display": "User Account Control"
+          "value": "displayName",
+          "display": "Display Name"
+        },
+        {
+          "value": "employeeID",
+          "display": "Employee Id"
+        },
+        {
+          "value": "givenName",
+          "display": "Given Name"
+        },
+        {
+          "value": "initials",
+          "display": "Initials"
+        },
+        {
+          "value": "lockoutTime",
+          "display": "Lockout Time"
+        },
+        {
+          "value": "mail",
+          "display": "Mail"
         },
         {
           "value": "memberOf",
           "display": "Member Of"
+        },
+        {
+          "value": "pwdLastSet",
+          "display": "Pwd Last Set"
+        },
+        {
+          "value": "sAMAccountName",
+          "display": "SAM Account Name"
+        },
+        {
+          "value": "sn",
+          "display": "SN"
+        },
+        {
+          "value": "userAccountControl",
+          "display": "User Account Control"
+        },
+        {
+          "value": "userPrincipalName",
+          "display": "User Principal Name"
+        },
+        {
+          "value": "whenCreated",
+          "display": "When Created"
         }
       ],
       "type": "select",
@@ -293,8 +345,8 @@
         }
       ],
       "multiple": true,
-      "userCanEdit": true,
-      "adminOnly": false
+      "userCanEdit": false,
+      "adminOnly": true
     },
     {
       "key": "detailedCustomUserAttributes",
@@ -302,8 +354,8 @@
       "description": "Custom user attributes you would like to display in the details portion of the integration.  Provide a comma delimited list. Attributes are case sensitive.",
       "default": "",
       "type": "text",
-      "userCanEdit": true,
-      "adminOnly": false
+      "userCanEdit": false,
+      "adminOnly": true
     },
     {
       "key": "attributeDisplayMappings",
