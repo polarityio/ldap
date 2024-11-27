@@ -6,6 +6,8 @@
     "level": "info"
   },
   "description": "Search your Lightweight Directory Access Protocol (LDAP) server by email address",
+  "supportsAdditionalCustomTypes": true,
+  "dataTypes": ["email"],
   "entityTypes": ["email"],
   "defaultColor": "light-blue",
   "styles": ["./styles/ldap.less"],
@@ -24,13 +26,6 @@
     "template": {
       "file": "./templates/ldap-summary.hbs"
     }
-  },
-  "request": {
-    "cert": "",
-    "key": "",
-    "passphrase": "",
-    "ca": "",
-    "proxy": ""
   },
   "options": [
     {
