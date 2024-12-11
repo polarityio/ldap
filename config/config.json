@@ -6,9 +6,27 @@
     "level": "info"
   },
   "description": "Search your Lightweight Directory Access Protocol (LDAP) server by email address",
-  "entityTypes": ["email"],
+  "supportsAdditionalCustomTypes": true,
+  "dataTypes": [
+    "email",
+    {
+      "type": "custom",
+      "regex": "^(?<!\\n|\\r\\n)[ \\t]*[a-zA-Z0-9\\-]{5,25}[ \\t]*(?!\\n|\\r\\n)$",
+      "key": "username",
+      "description": "Matches on possible usernames which can be a single search term between 5 and 25 characters using A-Z, 0-9 and dashes. Regex should be updated for your specific LDAP environment.",
+      "enabled": false,
+      "editable": true,
+      "isCaseSensitive": false,
+      "isGlobal": true
+    }
+  ],
+  "entityTypes": [
+    "email"
+  ],
   "defaultColor": "light-blue",
-  "styles": ["./styles/ldap.less"],
+  "styles": [
+    "./styles/ldap.less"
+  ],
   "block": {
     "component": {
       "file": "./components/ldap-block.js"
@@ -24,13 +42,6 @@
     "template": {
       "file": "./templates/ldap-summary.hbs"
     }
-  },
-  "request": {
-    "cert": "",
-    "key": "",
-    "passphrase": "",
-    "ca": "",
-    "proxy": ""
   },
   "options": [
     {
