@@ -1,0 +1,31 @@
+{
+  "root": {
+    "path": "",
+    "on_null": "return_empty"
+  },
+  "pipeline": [
+    {
+      "op": "copy",
+      "from": "userDetailsList[].display",
+      "to": "reduced_results.user_details_display"
+    },
+    {
+      "op": "copy",
+      "from": "userDetailsList[].value",
+      "to": "reduced_results.user_details_value"
+    },
+    {
+      "op": "copy",
+      "from": "userDetailsList[].name",
+      "to": "reduced_results.user_details_name"
+    },
+    {
+      "op": "prune",
+      "strategy": "empty_values",
+      "target": "reduced_results"
+    }
+  ],
+  "output": {
+    "result": "$working.reduced_results"
+  }
+}

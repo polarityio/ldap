@@ -1,0 +1,179 @@
+{
+  "userOptions": {
+    "summaryUserAttributes": [
+      {
+        "value": "displayName",
+        "display": "Display Name"
+      }
+    ],
+    "summaryCustomUserAttributes": "",
+    "detailedUserAttributes": [
+      {
+        "value": "cn",
+        "display": "CN"
+      },
+      {
+        "value": "mail",
+        "display": "Mail"
+      },
+      {
+        "value": "displayName",
+        "display": "Display Name"
+      },
+      {
+        "value": "distinguishedName",
+        "display": "Distinguished Name"
+      },
+      {
+        "value": "givenName",
+        "display": "Given Name"
+      },
+      {
+        "value": "sn",
+        "display": "SN"
+      },
+      {
+        "value": "userPrincipalName",
+        "display": "User Principal Name"
+      },
+      {
+        "value": "memberOf",
+        "display": "Member Of"
+      },
+      {
+        "value": "whenCreated",
+        "display": "When Created"
+      },
+      {
+        "value": "pwdLastSet",
+        "display": "Pwd Last Set"
+      },
+      {
+        "value": "userAccountControl",
+        "display": "User Account Control"
+      }
+    ],
+    "detailedCustomUserAttributes": "department,title"
+  },
+  "userDetailsList": [
+    {
+      "value": "John Doe",
+      "originalValue": "John Doe",
+      "name": "cn",
+      "display": "CN",
+      "type": "string"
+    },
+    {
+      "value": "john.doe@company.com",
+      "originalValue": "john.doe@company.com",
+      "name": "mail",
+      "display": "Mail",
+      "type": "string"
+    },
+    {
+      "value": "John Doe",
+      "originalValue": "John Doe",
+      "name": "displayName",
+      "display": "Display Name",
+      "type": "string"
+    },
+    {
+      "value": "CN=John Doe,OU=Users,DC=company,DC=com",
+      "originalValue": "CN=John Doe,OU=Users,DC=company,DC=com",
+      "name": "distinguishedName",
+      "display": "Distinguished Name",
+      "type": "string"
+    },
+    {
+      "value": "John",
+      "originalValue": "John",
+      "name": "givenName",
+      "display": "Given Name",
+      "type": "string"
+    },
+    {
+      "value": "Doe",
+      "originalValue": "Doe",
+      "name": "sn",
+      "display": "SN",
+      "type": "string"
+    },
+    {
+      "value": "john.doe@company.com",
+      "originalValue": "john.doe@company.com",
+      "name": "userPrincipalName",
+      "display": "User Principal Name",
+      "type": "string"
+    },
+    {
+      "value": [
+        "SecurityTeam",
+        "ThreatHunters",
+        "AdminUsers"
+      ],
+      "originalValue": [
+        "CN=SecurityTeam,OU=Groups,DC=company,DC=com",
+        "CN=ThreatHunters,OU=Groups,DC=company,DC=com",
+        "CN=AdminUsers,OU=Groups,DC=company,DC=com"
+      ],
+      "name": "memberOf",
+      "display": "Member Of",
+      "type": "array"
+    },
+    {
+      "value": "2023-01-15T08:30:00.000Z",
+      "originalValue": "20230115083000.0Z",
+      "name": "whenCreated",
+      "display": "When Created",
+      "type": "date"
+    },
+    {
+      "value": "2024-11-20T14:22:00.000Z",
+      "originalValue": "133771297200000000",
+      "name": "pwdLastSet",
+      "display": "Pwd Last Set",
+      "type": "date"
+    },
+    {
+      "value": [
+        "NORMAL_ACCOUNT",
+        "DONT_EXPIRE_PASSWORD"
+      ],
+      "originalValue": "66048",
+      "name": "userAccountControl",
+      "display": "User Account Control",
+      "type": "tag"
+    },
+    {
+      "value": "Information Security",
+      "originalValue": "Information Security",
+      "name": "department",
+      "display": null,
+      "type": "string"
+    },
+    {
+      "value": "Senior Security Analyst",
+      "originalValue": "Senior Security Analyst",
+      "name": "title",
+      "display": null,
+      "type": "string"
+    }
+  ],
+  "userSummaryHash": {
+    "displayName": {
+      "value": "John Doe",
+      "originalValue": "John Doe",
+      "name": "displayName",
+      "display": "Display Name",
+      "type": "string"
+    }
+  },
+  "extraInternalData": {
+    "searchTime": 0.245,
+    "connectionPoolStats": {
+      "size": 10,
+      "available": 8,
+      "borrowed": 2
+    }
+  }
+}
